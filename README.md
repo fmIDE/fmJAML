@@ -51,8 +51,8 @@ fmJAML supports
     - simple data manipulation:
       - trim/format: `*` / `**` / `***` / `****` / `*****`
       - output value: `missing value`
-      - not value: `!0`
-       - (not yet implemented, but great idea:) EOL operator
+      - not value: `!'0'`
+       - (not yet implemented, but great idea:) EOL operator `¶`:
         - replace EOLs: `¶' '`
         - use first line only: `¶1`
     - composablity of operators:
