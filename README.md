@@ -50,7 +50,7 @@ fmJAML supports
     - conditional data type: `?N:U`
     - simple data manipulation:
       - trim/format: `*` / `**` / `***` / `****` / `*****`
-      - output value: `missing value`
+      - output value: `'missing value'`
       - not value: `!'0'`
        - (not yet implemented, but great idea:) EOL operator `¶`:
         - replace EOLs: `¶' '`
