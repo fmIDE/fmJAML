@@ -39,7 +39,7 @@ fmJAML supports
 - path inheritance  (=DRY paths!) via empty keys: `..`
 - multiline values: `===`
 - data type specification
-  - shorthand for object and null data types (no `=` / only `=`)
+  - shorthand for object and null data types (*no* `=` → `object`/ *only* `=` → `null`)
     ```
     [+].document
     [:]..selected=
