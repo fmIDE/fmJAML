@@ -53,8 +53,8 @@ fmJAML supports
       - output value: `'missing value'`
       - not value: `!'0'`
        - EOL operator `¶`:
-        - replace EOLs: `¶' '`
-        - use first line only: `¶1`
+         - replace EOLs: `¶' '`
+         - use first line only: `¶1`
     - composablity of operators:
       - `B!0?` (optional truelean)
       - `***?*****` (optional pretty printed JSON)
