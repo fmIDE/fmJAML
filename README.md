@@ -47,7 +47,7 @@ fmJAML supports
   - data type specification string: `;…;`
     - data types: `T`, `N`, `B`, `D`, `I`, `M`, `R`
     - optional elements: `N?`
-    - conditional data type: `?N:U`
+    - conditional data type: `?N:T`
     - simple data manipulation:
       - trim/format: `*` / `**` / `***` / `****` / `*****`
       - output value: `'missing value'`
