@@ -46,15 +46,20 @@ fmJAML supports
     ```
   - data type specification string: `;…;`
     - data types: `T`, `N`, `B`, `D`, `I`, `M`, `R`
-    - optional elements: `N?`
-    - conditional data type: `?N:T`
     - simple data manipulation:
       - trim/format: `*` / `**` / `***` / `****` / `*****`
       - output value: `'missing value'`
       - not value: `!'0'`
        - EOL operator `¶`:
-         - replace EOLs: `¶' '`
          - use first line only: `¶1`
+         - remove EOLs: `¶''`
+         - replace EOLs: `¶' '`
+    - conditionals
+      - optional operator (test for value) `?`
+	    - optional elements: `N?`
+        - conditional data type: `?N:T`
+	  - mapping operator (test for empty) `-`
+      - else operator `:`
     - composablity of operators:
       - `B!0?` (optional truelean)
       - `***?*****` (optional pretty printed JSON)
