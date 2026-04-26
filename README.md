@@ -1,6 +1,4 @@
-**🚧 Note that fmJAML is still heavily under construction! 🚧**
-
-```
+```text
     __                _         __  __ _
    / _|              | |  /\   |  \/  | |
   | |_ _ __ ___      | | /  \  | \  / | |
@@ -11,11 +9,13 @@
 
 # fmJAML
 
-**F**ile**M**aker **J**SON **A** **M**arkdown **L**anguage
+`code from your keyboard`
 
-fmJAML is a simple but powerful `path=value` templating language for writing JSON structures in a machine and human readable shorthand format.
+fmJAML - **F**ile**M**aker **J**SON **A** **M**arkdown **L**anguage -  is a simple but powerful `path=value` templating language for writing JSON structures in a shorthand format suitable for both 'Machine and Mensch' - for AI and U+ME!
 
-```
+Note that **🚧 fmJAML is still heavily under construction! 🚧**
+
+```fmjaml
 [+].fmJAML
 [:]..name[+]="FileMaker JaSON Markdown Language"
 [:].       ]="FileMaker JSON A Markdown Language"
@@ -32,33 +32,34 @@ fmJAML is a simple but powerful `path=value` templating language for writing JSO
 ===
 ```
 
-
-fmJAML supports 
+fmJAML supports
 
 - append array path shorthand: `[+]`/`[:]`
 - path inheritance  (=DRY paths!) via empty keys: `..`
 - multiline values: `===`
 - data type specification
   - shorthand for object and null data types (*no* `=` → `object`/ *only* `=` → `null`)
-    ```
+
+    ```fmjaml
     [+].document
     [:]..selected=
     ```
+
   - data type specification string: `;…;`
     - data types: `T`, `N`, `B`, `D`, `I`, `M`, `R`
     - simple data manipulation:
       - trim/format: `*` / `**` / `***` / `****` / `*****`
       - output value: `'missing value'`
       - not value: `!'0'`
-       - EOL operator `¶`:
-         - use first line only: `¶1`
-         - remove EOLs: `¶''`
-         - replace EOLs: `¶' '`
+      - EOL operator `¶`:
+        - use first line only: `¶1`
+        - remove EOLs: `¶''`
+        - replace EOLs: `¶' '`
     - conditionals
-      - optional operator (test for value) `?`
-	    - optional elements: `N?`
-        - conditional data type: `?N:T`
-	  - mapping operator (test for empty) `-`
+      - optional operator `?` (=test for non-empty value)
+        - optional elements: `N?`
+          - conditional data type: `?N:T`
+      - mapping operator `-` (=test for empty value)
       - else operator `:`
     - composablity of operators:
       - `B!0?` (optional truelean)
@@ -68,28 +69,28 @@ fmJAML supports
 
 The fmJAML above creates the following JSON
 
-```
+```json
 [
-	{
-		"fmJAML" : 
-		{
-			"date_of_inspiration" : "2026-03-10",
-			"implementation_count" : 1,
-			"name" : 
-			[
-				"FileMaker JaSON Markdown Language",
-				"FileMaker JSON A Markdown Language",
-				"FileMaker JSON As a Markdown Language"
-			],
-			"text_logo" : "    __                _         __  __ _\r   / _|              | |  /\\   |  \\/  | |\r  | |_ _ __ ___      | | /  \\  | \\  / | |\r  |  _| '_ ` _ \\ _   | |/ /\\ \\ | |\\/| | |\r  | | | | | | | | |__| / ____ \\| |  | | |____\r  |_| |_| |_| |_|\\____/_/    \\_\\_|  |_|______|"
-		}
-	}
+ {
+  "fmJAML" : 
+  {
+   "date_of_inspiration" : "2026-03-10",
+   "implementation_count" : 1,
+   "name" : 
+   [
+    "FileMaker JaSON Markdown Language",
+    "FileMaker JSON A Markdown Language",
+    "FileMaker JSON As a Markdown Language"
+   ],
+   "text_logo" : "    __                _         __  __ _\r   / _|              | |  /\\   |  \\/  | |\r  | |_ _ __ ___      | | /  \\  | \\  / | |\r  |  _| '_ ` _ \\ _   | |/ /\\ \\ | |\\/| | |\r  | | | | | | | | |__| / ____ \\| |  | | |____\r  |_| |_| |_| |_|\\____/_/    \\_\\_|  |_|______|"
+  }
+ }
 ]
 ```
 
 Here is an fmJAML template to construct a feedback object
 
-```
+```fmjaml
 feedback
 .title=;¶'//'**;$title
 .text=;***;$text
@@ -102,4 +103,3 @@ feedback
 fmJAML was originally conceived for specifying fmIDE Action Scripts in a concise format, but has been extracted from that context since it is (or aims to be) suitable for defining any kind of JSON.
 
 fmJAML is only 'FileMaker' JAML in so far that it is inspired by a cut down version the FileMaker JSONSetElement format, it uses FileMaker keyboard shortcut letters to specify data type, and a fmJAML custom function exists to interpret fmJAML, but apart from that it has no direct dependency on FileMaker and could be used outside of the FileMaker world.
-
