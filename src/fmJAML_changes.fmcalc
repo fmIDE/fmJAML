@@ -1,0 +1,73 @@
+/* fmJAML_changes
+   __                _         __  __ _      
+  / _|              | |  /\   |  \/  | |     
+ | |_ _ __ ___      | | /  \  | \  / | |     
+ |  _| '_ ` _ \ _   | |/ /\ \ | |\/| | |     
+ | | | | | | | | |__| / ____ \| |  | | |____ 
+ |_| |_| |_| |_|\____/_/    \_\_|  |_|______|
+                                             
+                                             
+`code from your keyboard`
+
+**fmJAML** = **F**ile**M**aker **J**SON **A**s a **M**arkdown **L**angauge
+
+Since CF length is limited this CF contains JUST the history.
+
+2026-05-05 @mrwatson-de v0.15
+- Improve DPS
+  - Fix mapping operator `-`
+  - Ignore whitespace within DPS
+- Rewrite DPS parser with clear and correct logic
+  - Replace drop logic with `$fmJAML_context`, `$fmJAML_clause_empty` and `¢eoClause` state machine model
+  - Extend semantics to cover `?`, `-`, `?:` and `-:` contexts
+  - Simplify DPS parser state and remove obsolete code
+2026-04-28 @mrwatson-de v0.14
+- Add mapping operator `-` for empty-value mapping. [#16](https://github.com/fmIDE/fmJAML/issues/16)
+- Rename Data Type String to Data Processing String (DPS). [#17](https://github.com/fmIDE/fmJAML/issues/17)
+- Simplify DPS vars & debug globals for terminology consistency. [#6](https://github.com/fmIDE/fmJAML/issues/6)
+- Defer `D`, `I`, `M`, and `R` formatting/encoding until JSON output, so DPS tests operate on coerced *FileMaker* values.
+- Move full version history to `fmJAML_changes` because of the custom-function size limit.
+2026-04-26 @mrwatson.de v0.13
+- Add divide operator `/`
+- Improve performance by using Choose instead of Case in the Data Processing String
+2026-04-22 @mrwatson.de v0.12
+- Add eol-operator `¶`
+2026-04-18 @mrwatson.de v0.11
+- Ignore empty lines
+- Ignore lines with only `//`comment
+- Ignore line 1 if it starts with  the shebang `#!fmjaml`
+2026-04-15 @mrwatson-de v0.10
+- Wrap fmJAML as a CF (and for fmIDE unwrap it)
+- Add initial support for constructing JSON objects
+- Remove fmIDE actions object wrapper
+2026-04-14 @mrwatson-de v0.9
+- Fix `?` operator with (DRY) lazy path dropping inc. EOF
+- Extend the trim operator naturally to cover JSON formatting:
+  - `*`-> trim (= spaces),
+  - `**`-> trim horizontally (+ trim TAB),
+  - `***`-> trim vertically (+ trim EOL),
+  - `****`-> trim compact JSON (+ trim WS inside JSON)
+  - `*****`-> trim format JSON (+ add WS inside JSON)
+2026-04-12 @mrwatson-de v0.8
+- Remove references to fmIDE
+- Remove CF to detect Caps lock
+- Improve comments & history
+2026-04-03 @mrwatson-de v0.7
+- Add Data Type String - Optional operator (?)
+2026-04-01 @mrwatson-de v0.6
+- Add Data Type String - Trim operator (*[*[*]])
+2026-03-25 @mrwatson-de v0.5
+- Add fmJAML Logo(s) (inc. fmJAML42 - animated Logo fun)
+2026-03-20 @mrwatson-de v0.4
+- Add Data Type String - Not operator (!)
+2026-03-18 @mrwatson-de v0.3
+- Add support for [+] in older FIleMaker versions
+2026-03-17 @mrwatson-de v0.2
+- Add Data Type String / Simple data types
+2026-03-15 @mrwatson-de v0.1.1
+- Fix data type to Object when no `=` and Null when no expression 
+2026-03-10 @mrwatson-de v0.1
+- A DSL comes to life
+
+*/
+""
