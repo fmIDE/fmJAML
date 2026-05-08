@@ -13,13 +13,14 @@
 
 fmJAML is a Domain Specific Langauage (DSL) for encoding JSON as a simple, concise, readable string in FileMaker.
 
-The fmJAML function takes an fmJAML text as input and outputs the equivalent JSON.
+The fmJAML function takes an fmJAML text as input and outputs the equivalent JSON, applying relevant processing logic to data type, value and path.
 
-It was originally created to write fmIDE Action Scripts.
+Originally created to write fmIDE Action Scripts, fmJAML aims to be a generalised templating system for creating any JSON, 
+particularly targeted at passing JSON to APIs.
 
 Author: @mrwatson-de
 Created: 2026-03-10
-Version: 2026-05-05 @mrwatson-de v0.15
+Version: 2026-05-85 @mrwatson-de v0.16
 
 Note: Due to CF size limit see fmJAML_changes for rest of the history
 
@@ -361,19 +362,22 @@ $fmJAML_skip = "" ;
   ******************
 
   Convert the value to the target data-type, but first when a processing operator (`!`/`?`/`-`) is encountered
+TNBAOUJDIMR
   */
   ¢performLazyCoercing = Case(
     ¢eof or IsEmpty ( $fmJAML_dtype ) ; "" ;
     Position ( "!?-" ; ¢char ; 1 ; 1 ) = 0 ; "" ;
     $fmJAML_dtype = JSONString     ; Let( $fmJAML_val = GetAsText      ( $fmJAML_val )      ; "" ) ;
     $fmJAML_dtype = JSONNumber     ; Let( $fmJAML_val = GetAsNumber    ( $fmJAML_val )      ; "" ) ;
+    $fmJAML_dtype = JSONObject     ; Let( $fmJAML_val = JSONGetElement ( $fmJAML_val ; "" ) ; "" ) ;
+    $fmJAML_dtype = JSONArray      ; Let( $fmJAML_val = JSONGetElement ( $fmJAML_val ; "" ) ; "" ) ;
     $fmJAML_dtype = JSONBoolean    ; Let( $fmJAML_val = GetAsBoolean   ( $fmJAML_val )      ; "" ) ;
+    $fmJAML_dtype = JSONNull       ; Let( $fmJAML_val = ""                                  ; "" ) ;
+    $fmJAML_dtype = JSONRaw        ; Let( $fmJAML_val = JSONGetElement ( $fmJAML_val ; "" ) ; "" ) ;
     $fmJAML_dtype = ¢JSONDate      ; Let( $fmJAML_val = GetAsDate      ( $fmJAML_val )      ; "" ) ;
     $fmJAML_dtype = ¢JSONTime      ; Let( $fmJAML_val = GetAsTime      ( $fmJAML_val )      ; "" ) ;
     $fmJAML_dtype = ¢JSONTimestamp ; Let( $fmJAML_val = GetAsTimestamp ( $fmJAML_val )      ; "" ) ;
-    $fmJAML_dtype = JSONArray      ; Let( $fmJAML_val = JSONGetElement ( $fmJAML_val ; "" ) ; "" ) ;
-    $fmJAML_dtype = JSONObject     ; Let( $fmJAML_val = JSONGetElement ( $fmJAML_val ; "" ) ; "" ) ;
-    $fmJAML_dtype = JSONRaw        ; Let( $fmJAML_val = JSONGetElement ( $fmJAML_val ; "" ) ; "" ) ;
+    /* no coercion to container */
   );
 
   /*************
@@ -537,22 +541,23 @@ $fmJAML_skip = "" ;
 
 
     /* Perform the next operator (using Choose for speed)… */
-    Choose ( Position( "TNBAOUDIMR*!\¶/?" ; Substitute( ¢char ; "-" ; "?" ) ; 1 ; 1 ) ;
+    Choose ( Position( "TNOABUJDIMR*!\¶/?" ; Substitute( ¢char ; "-" ; "?" ) ; 1 ; 1 ) ;
 
     /* ignore unknown char */ "" ; 
 
     /* Process data type */
 
-    /* "T" ;*/ Let( $fmJAML_dtype = JSONString  ; "" ) ;
-    /* "N" ;*/ Let( $fmJAML_dtype = JSONNumber  ; "" ) ;
-    /* "B" ;*/ Let( $fmJAML_dtype = JSONBoolean ; "" ) ;
-    /* "A" ;*/ Let( $fmJAML_dtype = JSONArray   ; "" ) ;
-    /* "O" ;*/ Let( $fmJAML_dtype = JSONObject  ; "" ) ;
-    /* "U" ;*/ Let( $fmJAML_dtype = JSONNull    ; "" ) ;
-    /* "D" ;*/ Let( $fmJAML_dtype = ¢JSONDate   ; "" ) ;
-    /* "I" ;*/ Let( $fmJAML_dtype = ¢JSONTime   ; "" ) ;
+    /* "T" ;*/ Let( $fmJAML_dtype = JSONString     ; "" ) ;
+    /* "N" ;*/ Let( $fmJAML_dtype = JSONNumber     ; "" ) ;
+    /* "O" ;*/ Let( $fmJAML_dtype = JSONObject     ; "" ) ;
+    /* "A" ;*/ Let( $fmJAML_dtype = JSONArray      ; "" ) ;
+    /* "B" ;*/ Let( $fmJAML_dtype = JSONBoolean    ; "" ) ;
+    /* "U" ;*/ Let( $fmJAML_dtype = JSONNull       ; "" ) ;
+    /* "J" ;*/ Let( $fmJAML_dtype = JSONRaw        ; "" ) ;
+    /* "D" ;*/ Let( $fmJAML_dtype = ¢JSONDate      ; "" ) ;
+    /* "I" ;*/ Let( $fmJAML_dtype = ¢JSONTime      ; "" ) ;
     /* "M" ;*/ Let( $fmJAML_dtype = ¢JSONTimestamp ; "" ) ;
-    /* "R" ;*/ Let( $fmJAML_dtype = ¢JSONContainer ;  "" ) ;
+    /* "R" ;*/ Let( $fmJAML_dtype = ¢JSONContainer ; "" ) ;
 
     /* Process white space operators */
 

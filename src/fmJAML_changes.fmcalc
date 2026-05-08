@@ -11,8 +11,13 @@
 
 **fmJAML** = **F**ile**M**aker **J**SON **A**s a **M**arkdown **L**angauge
 
-Since CF length is limited this CF contains JUST the history.
+Since CF length is limited to 30000 chars this CF contains JUST the history; the main function is in CF fmJAML.
 
+2026-05-85 @mrwatson-de v0.16
+- Add data type `J`for JSONRaw
+- Standardise order of data types
+- Create further tests
+  - Passing 66/69 tests: tabs in empty lines and support for object notation not yet implemented
 2026-05-05 @mrwatson-de v0.15
 - Improve DPS
   - Fix mapping operator `-`
