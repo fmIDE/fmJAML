@@ -11,9 +11,7 @@
 
 `code from your keyboard`
 
-fmJAML - **F**ile**M**aker **Ja**SON **M**arkdown **L**anguage -  is a simple but powerful `path=value` templating language for writing JSON structures in a shorthand format suitable for both 'Machine and Mensch' - for AI and U+ME!
-
-Note that **🚧 fmJAML is still heavily under construction! 🚧**
+fmJAML - **F**ile**M**aker **Ja**SON **M**arkdown **L**anguage -  is a simple but powerful `path=value` templating language for writing JSON structures in a shorthand format suitable for both 'Machine and Mensch' - for AI and Me+U!
 
 ```fmjaml
 [+].fmJAML
@@ -31,6 +29,8 @@ Note that **🚧 fmJAML is still heavily under construction! 🚧**
   |_| |_| |_| |_|\____/_/    \_\_|  |_|______|
 ===
 ```
+
+**Please note** that, whilst the `[+]…` array syntax has now somewhat stabilised, **🚧 fmJAML is still heavily under construction! 🚧**
 
 fmJAML supports
 
