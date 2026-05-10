@@ -13,7 +13,13 @@
 
 Since CF length is limited to 30000 chars this CF contains JUST the history; the main function is in CF fmJAML.
 
-2026-05-85 @mrwatson-de v0.16
+2026-05-10 @mrwatson-de v0.17
+- Add trimming of tabs
+- Change line-comment character to `#` to better harmonise with line oriented UNIX aesthetic
+- Standardise fmJAML variable names with two underscores `($)$fmJAML__*`
+- Change unnecessary $var to ¢var
+- Document CF better
+2026-05-08 @mrwatson-de v0.16
 - Add data type `J`for JSONRaw
 - Standardise order of data types
 - Create further tests
