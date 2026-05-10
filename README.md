@@ -37,15 +37,15 @@ fmJAML supports
 - append array path shorthand: `[+]`/`[:]`
 - path inheritance  (=DRY paths!) via empty keys: `..`
 - multiline values: `===`
-- data type specification
+- data type specification, simple value manipulation and optional values
   - shorthand for object and null data types (*no* `=` → `object`/ *only* `=` → `null`)
 
     ```fmjaml
     [+].document
     [:]..selected=
     ```
-
-  - data type specification string: `;…;`
+    
+  - data processing string (DPS): `;…;`
     - data types: `T`, `N`, `B`, `D`, `I`, `M`, `R`
     - simple data manipulation:
       - trim/format: `*` / `**` / `***` / `****` / `*****`
@@ -61,9 +61,10 @@ fmJAML supports
           - conditional data type: `?N:T`
       - mapping operator `-` (=test for empty value)
       - else operator `:`
-    - composablity of operators:
+    - powerful constructs due to operator composablity:
       - `B!0?` (optional truelean)
       - `***?*****` (optional pretty printed JSON)
+      - `!'0''1'-:'illegal value' (error handling) 
 
 # For Example
 
