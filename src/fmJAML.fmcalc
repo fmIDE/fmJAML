@@ -1,4 +1,4 @@
-/* fmJAML ( pJAML )
+/* fmJAML ( pFmJAML ; pOptionalInitialJSON )
    __                _         __  __ _      
   / _|              | |  /\   |  \/  | |     
  | |_ _ __ ___      | | /  \  | \  / | |     
@@ -13,22 +13,26 @@
 
 fmJAML is a Domain Specific Langauage (DSL) for encoding JSON as a simple, concise, readable string in FileMaker.
 
-The fmJAML function takes an fmJAML text as input and outputs the equivalent JSON, applying relevant processing logic to data type, value and path.
+The fmJAML function takes an fmJAML text as input, pFmJAML and an optional initial JSON
+and outputs the equivalent JSON, applying relevant processing logic to data type, value and path.
 
-Originally created to write fmIDE Action Scripts, fmJAML aims to be a generalised templating system for creating most any JSON, 
-particularly targeted at passing JSON to APIs.
+fmJAML was riginally created to write fmIDE Action Scripts but aims to be a generalised templating system
+for creating most any JSON, particularly targeted at passing JSON to APIs.
 
 @author: @mrwatson-de
 @created: 2026-03-10
-@version: 2026-05-10 @mrwatson-de v0.17
+@version: 2026-05-13 @mrwatson-de v0.19
 @history: See fmJAML_changes
 
 Parameters
-@param fmJAML (string) - the fmJAML code to express your JSON in FileMaker
+@param pFmJAML (string) - the fmJAML code to express your JSON in FileMaker
+@param pOptionalInitialJSON (string) - a JSON that the fmJAML code builds upon or an empty string
 @returns json (string) - the JSON constructed from the fmJAML string
 
-I/O
-@input $fmJAML__debug - log level to use: 0=none, 3=errors, 5=info, 7=debug (See fmLog357 for more).
+Input Variables
+@input $fmJAML__debug - fmLog357 log level to use: 0/""=none, 3=errors, 5=info, 7=debug (See fmLog357 for more).
+
+Output Variables
 @output $$fmJAML__debug_log (string) - debugging log
 @output $$fmJAML__debug_dtype (string) - just the data types
 
@@ -43,26 +47,27 @@ Process fmJAML lines
 While (
 [
 
-/* input parameter */
+/* input param */
+¢result = pOptionalInitialJSON ;
 ¢lines = pFmJAML ;
 
-/* input variables */
+/* input vars */
 ¢debug = Case( not IsEmpty ( $fmJAML__debug ) ; $fmJAML__debug ; Get ( ActiveModifierKeys ) ) ;
 /* FIXME - Using the modifier keys for log level is a neat trick for quick debugging but a bit of a fudge. */
 
-/* output variables */
+/* output vars */
 $$fmJAML__debug_log = "" ;
 $$fmJAML__debug_dtype = "" ;
 
-¢fmp_version_major = 0 + GetValue ( Substitute ( Get ( ApplicationVersion ) ; "." ; ¶ ) ; 1 ) ;
-
-
-/* Prepare variables */
+/* internal vars */
 $fmJAML__path_prev = "" ;
-
-¢result = "" ;
+¢mbs = Evaluate ( "MBS(\"Version\")" ) ≠ "?" ;
+¢fmp_version_major = 0 + GetValue ( Substitute ( Get ( ApplicationVersion ) ; "." ; ¶ ) ; 1 ) ;
+$$fmJAML__debug_log = "¢mbs: " & ¢mbs & ¶ ;
 
 /* Constants */
+¢TAB = Char(9) ;
+¢WS  = " " & ¢TAB ;
 ¢JSONDate      = 20 ;
 ¢JSONTime      = 21 ;
 ¢JSONTimestamp = 22 ;
@@ -78,11 +83,10 @@ FOR EACH ¢line
 ]; ¢line_i <= ¢line_n ;[
 
 ¢line  = GetValue ( ¢lines ; ¢line_i );
-¢line  = Case( not Position( ¢line ; Char(9) ; 1 ; 1 ) ; Trim( ¢line ) ; Let ([
-           ¢tmp = Substitute( ¢line ; [" " ; ""] ; [Char(9) ; ""] ) ; 
-           ¢ch1 = Left( ¢tmp ; 1 ) ;
-           ¢chN = Right( ¢tmp ; 1 ) ;
-           ¢pos = Position( ¢line ; ¢ch1 ; 1 ; 1 )
+/* trim horizontally */
+¢line  = Case( not Position( ¢line ; ¢TAB ; 1 ; 1 ) ; Trim( ¢line ) ; Let ([
+           ¢tmp = Substitute( ¢line ; [" " ; ""] ; [¢TAB ; ""] ) ; 
+           ¢ch1 = Left( ¢tmp ; 1 ) ; ¢chN = Right( ¢tmp ; 1 ) ; ¢pos = Position( ¢line ; ¢ch1 ; 1 ; 1 )
            ];
            Case( ¢pos ; Middle ( ¢line ; ¢pos ; Position( ¢line ; ¢chN ; Length ( ¢line ) ; -1 ) - ¢pos + 1 ) )
            ));
@@ -98,9 +102,24 @@ into «path»[=[;«dtype_str»;][«expr»]]]
 ¢line  = Case( Left ( ¢line ; 1 ) ≠ "#" ; ¢line ) ;
 ¢isLineEmpty = IsEmpty( ¢line ) ;
 
-/* split at `=`*/
+/* split at `=` and trim path horizontally right*/
 ¢posEquals = Position( ¢line ; "=" ; 1 ; 1 ) ;
-$fmJAML__path  = Case( ¢posEquals ; Left( ¢line ; ¢posEquals-1 ) ; ¢line ) ;
+$fmJAML__path = Case( not ¢posEquals ; ¢line ; While(
+  [
+
+  ¢result = ¢line ;
+  ¢len = ¢posEquals-1
+
+  ]; Position ( ¢WS ; Middle( ¢result ; ¢len ; 1 ) ; 1 ; 1 ) ;[
+
+  ¢len = ¢len - 1
+
+  ];
+
+  Left ( ¢result ; ¢len )
+
+  ));
+
 ¢lineRest = Case( ¢posEquals ; Trim( Right( ¢line ; Length( ¢line ) - ¢posEquals ) ) ) ;
 
 /* DPS */
@@ -159,7 +178,7 @@ Algorithm:
 
 */
 
-¢fmJAML__path_no_ws = Substitute( $fmJAML__path ; [" " ; ""] ; [Char(9) ; ""] ) /*& "."*/ ;
+¢fmJAML__path_no_ws = Substitute( $fmJAML__path ; [" " ; ""] ; [¢TAB ; ""] ) /*& "."*/ ;
 $fmJAML__path = While ([
 
   ¢pos_no_ws = Position ( ¢fmJAML__path_no_ws ; "." ; 1 ; 1 ) ;
@@ -425,7 +444,7 @@ TNBAOUJDIMR
 
     ¢eof or
     ¢char = " " or
-    ¢char = Char(9) ; "" ;
+    ¢char = ¢TAB ; "" ;
 
     /* Process end-skip chars (`:` / `,`) *before* processing any skipping */
 
@@ -448,24 +467,37 @@ TNBAOUJDIMR
                         $fmJAML__sticky_op = ""
                        ]  ; "" ) ;
 
-    /********
-    '«value»'
-    *********
+    /*****************
+    'value' or ~regex~
+    ******************
 
     Read the entire apostrophe-string, then either 
     - if skipping             -> ignore it, otherwise (mark the current clause as not empty and…)
     - if not-value (`!'…'`)   -> remove the value if present or
     - if normal value (`'…'`) -> set the value to the string.
     */
-    ¢char = "'" ; Let([¢dpsValueEnd = Position ( ¢dps & "'" ; "'" ; ¢dpsPos+1 ; 1 ) ;
+    ¢char = "'" or
+    ¢mbs and /* if mbs is not present just ignore the regex op -> unknown char error below */
+    ¢char = "~" ; Let([¢isRegex = ¢char = "~" ;
+                       ¢dpsValueEnd = Position ( ¢dps & ¢char ; ¢char ; ¢dpsPos+1 ; 1 ) ;
                        $fmJAML__chars_read = ¢dpsValueEnd+1 - ¢dpsPos ;
                        ¢dpsValue = Middle( ¢dps ; ¢dpsPos+1 ; $fmJAML__chars_read - 2 ) ;
+                       ¢dpsGTPos = Position ( ¢dps ; ">" ; ¢dpsValueEnd+1 ; 1 ) ;
+                       ¢dpsReplaceOp = ¢dpsGTPos and (¢dpsGTPos = ¢dpsValueEnd+1 or  IsEmpty ( Substitute ( Middle ( ¢dps ; ¢dpsValueEnd+1 ; ¢dpsGTPos - ¢dpsValueEnd - 1 ) ; [" ";""] ; [Char(9);""] ) ) ) ;
 
 
                        /* Interpret a pilcrow `\¶` as an EOL `¶`  */
-                       ¢dpsValue = Substitute( ¢dpsValue ; "\¶" ; ¶ ) ;
+                       ¢dpsValue = Case( ¢isRegex ; ¢dpsValue ; Substitute( ¢dpsValue ; "\¶" ; ¶ ) ) ;
 
-                        /* Simply ignore the value if skipping…  */
+                       /* Simply ignore the value if skipping…  */
+                       $$fmJAML__debug_log = List ( $$fmJAML__debug_log ;
+"$char=" & ¢char ;
+"$fmJAML__sticky_op: " & $fmJAML__sticky_op ;
+"$fmJAML__skip: " & $fmJAML__skip ;
+"¢dpsGTPos: " & ¢dpsGTPos ;
+"¢dpsReplaceOp: " & ¢dpsReplaceOp ;
+
+) ;
 
                         If=Case ( not $fmJAML__skip ; Let([
 
@@ -473,21 +505,14 @@ TNBAOUJDIMR
                             $fmJAML__clause_empty = "" ;
                             $fmJAML__val = Case(
 
-                              /* If not-text operation (!'…') -> Remove value if present */
-                              $fmJAML__sticky_op = "!" ; Let([
-
-                                If=Case ( $fmJAML__val ≠ ¢dpsValue and ¢debug ≥ 7 ; Let([
-                                     $$fmJAML__debug_log = List( $$fmJAML__debug_log ;
-                                         "VALUE DROPPED: '" & $fmJAML__val & "'" ;
-                                       ) ;
-                                EndIf=0];""))
-
-                                ];
-
-                                /* REMOVE value if present // FIXME equal or exact? */
-                                Case ( $fmJAML__val ≠ ¢dpsValue ; $fmJAML__val )
-
-                                ) ;
+                              /* If not operation (!'value' / !~regex~) -> Remove value if present / regex-matched */
+                              $fmJAML__sticky_op = "!" ; Case ( Case ( ¢isRegex ;
+                                  /* If regex match… */
+                                  Exact( Evaluate ( "MBS(\"RegEx.Match\";" & Quote ( ¢dpsValue ) & ";" & Quote ( $fmJAML__val ) & ")" ) ; 1 ) ;
+                                  /* If value is equal… (FIXME equal or exact?) */
+                                  $fmJAML__val = ¢dpsValue
+                                ) /* …REMOVE, otherwise keep */
+                                  ; "" ; $fmJAML__val ) ;
 
                               /* If eol operation (¶'…') -> Replace EOLs in value with the text */
                               $fmJAML__sticky_op = "¶" ; Let([
@@ -513,7 +538,7 @@ TNBAOUJDIMR
 
                                 ) ;
 
-                              /* else divide operation  (/'…') -> Divide the value by the text */
+                              /* divide operation  (/'…') -> Divide the value by the text */
                               $fmJAML__sticky_op = "/" ; Let([
 
                                 $fmJAML__sticky_op = "" ;
@@ -533,6 +558,25 @@ TNBAOUJDIMR
                                 ) ;
 
 
+
+                              /* replace operation  ('…'>'…') -> Replace the value by the text */
+                              $fmJAML__sticky_op = ">" ; Let([
+                                $fmJAML__sticky_op = "" ;
+                                vResult = Substitute ( $fmJAML__val ; $fmJAML__replace ; ¢dpsValue );
+                                $fmJAML__replace = ""
+
+                                ];
+                                vResult
+                                ) ;
+
+
+                              /* else remember value to replace ('…'>) */
+                                ¢dpsReplaceOp ; Let([
+                                $fmJAML__replace = ¢dpsValue
+
+                                ];
+                                $fmJAML__val /* don't change */
+                                ) ;
 
                               /* else set-text operation ('…') -> Set value */
                                 ¢dpsValue
@@ -556,7 +600,7 @@ TNBAOUJDIMR
 
 
     /* Perform the next operator (using Choose for speed)… */
-    Choose ( Position( "TNOABUJDIMR*!\¶/?" ; Substitute( ¢char ; "-" ; "?" ) ; 1 ; 1 ) ;
+    Choose ( Position( "TNOABUJDIMR*!\¶/>?" ; Substitute( ¢char ; "-" ; "?" ) ; 1 ; 1 ) ;
 
     /* ignore unknown char */ "" ; 
 
@@ -585,7 +629,7 @@ TNBAOUJDIMR
 
                       /* "****" = Trim/Compact JSON */
                       $fmJAML__chars_read = 4 ;
-                        JSONGetElement ( $fmJAML__val ; "" ) ;
+                        JSONGetElement ( $fmJAML__val ; "" );
 
                       /* "*" = simple trim */
                       $fmJAML__chars_read = 1 ;
@@ -599,8 +643,8 @@ TNBAOUJDIMR
                         /* "***" = vertical trim (and EOL) */
                         ¢temp  = Case( 
                           $fmJAML__chars_read = 2 ; 
-                            Substitute( $fmJAML__val ; [" ";""] ; [Char(9);""] ) ;
-                            Substitute( $fmJAML__val ; [" ";""] ; [Char(9);""] ; [¶;""] ; [Char(10);""] )
+                            Substitute( $fmJAML__val ; [" ";""] ; [¢TAB;""] ) ;
+                            Substitute( $fmJAML__val ; [" ";""] ; [¢TAB;""] ; [¶;""] ; [Char(10);""] )
                           ) ;
 
                         /* trim everything outside the first and last characters */
@@ -632,6 +676,10 @@ TNBAOUJDIMR
 
     /* "/" ;*/ Let( $fmJAML__sticky_op = "/" ; "" ) ;
 
+    /* Process Replace operator `>` */
+
+    /* ">" ;*/ Let( $fmJAML__sticky_op = ">" ; "" ) ;
+
     /* 
      * Process conditional operators:
      *
@@ -648,6 +696,7 @@ TNBAOUJDIMR
           $fmJAML__clause_empty  = 1 ;
           $fmJAML__sticky_op     = ""
          ]; "" )
+
     ) /* End Choose ( parseNextOp ) */
 
   ); /* End SWITCH ( parseNextOp ) */

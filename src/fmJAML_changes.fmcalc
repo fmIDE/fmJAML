@@ -13,6 +13,11 @@
 
 Since CF length is limited to 30000 chars this CF contains JUST the history; the main function is in CF fmJAML.
 
+2026-05-13 @mrwatson-de v0.19
+- Add second parameter `pOptionalInitialJSON` so fmJAML can build on it.
+- Add `>` replace operator for strings `'search'>'replace'`
+2026-05-11 @mrwatson-de v0.18
+- Add 'drop-if-regex-match' op: `!~regex~`
 2026-05-10 @mrwatson-de v0.17
 - Add trimming of tabs
 - Change line-comment character to `#` to better harmonise with line oriented UNIX aesthetic
