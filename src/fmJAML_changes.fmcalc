@@ -13,6 +13,9 @@
 
 Since CF length is limited to 30000 chars this CF contains JUST the history; the main function is in CF fmJAML.
 
+2026-05-15 @mrwatson-de v0.20
+- dps requires a closing `;` and is only processed when present
+- Consolidated debugging
 2026-05-13 @mrwatson-de v0.19
 - Add second parameter `pOptionalInitialJSON` so fmJAML can build on it.
 - Add `>` replace operator for strings `'search'>'replace'`

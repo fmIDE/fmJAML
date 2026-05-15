@@ -21,7 +21,7 @@ for creating most any JSON, particularly targeted at passing JSON to APIs.
 
 @author: @mrwatson-de
 @created: 2026-03-10
-@version: 2026-05-13 @mrwatson-de v0.19
+@version: 2026-05-15 @mrwatson-de v0.20
 @history: See fmJAML_changes
 
 Parameters
@@ -55,15 +55,14 @@ While (
 ¢debug = Case( not IsEmpty ( $fmJAML__debug ) ; $fmJAML__debug ; Get ( ActiveModifierKeys ) ) ;
 /* FIXME - Using the modifier keys for log level is a neat trick for quick debugging but a bit of a fudge. */
 
-/* output vars */
-$$fmJAML__debug_log = "" ;
-$$fmJAML__debug_dtype = "" ;
-
 /* internal vars */
 $fmJAML__path_prev = "" ;
 ¢mbs = Evaluate ( "MBS(\"Version\")" ) ≠ "?" ;
 ¢fmp_version_major = 0 + GetValue ( Substitute ( Get ( ApplicationVersion ) ; "." ; ¶ ) ; 1 ) ;
-$$fmJAML__debug_log = "¢mbs: " & ¢mbs & ¶ ;
+
+/* output vars */
+$$fmJAML__debug_dtype = "" ;
+$$fmJAML__debug_log = Case( ¢debug ≥ 6 ; "¢debug: " & ¢debug & ¶ & "¢mbs: " & ¢mbs & ¶ ) ;
 
 /* Constants */
 ¢TAB = Char(9) ;
@@ -123,25 +122,24 @@ $fmJAML__path = Case( not ¢posEquals ; ¢line ; While(
 ¢lineRest = Case( ¢posEquals ; Trim( Right( ¢line ; Length( ¢line ) - ¢posEquals ) ) ) ;
 
 /* DPS */
-¢isDps = Left( ¢lineRest ; 1 ) = ";" ; 
-¢posDpsEnd   = Case( ¢isDps ; Position ( ¢lineRest & ";" ; ";" ; 2 ; 1 ) ) ;
-¢dps = Case ( ¢posDpsEnd ; Trim( Middle ( ¢lineRest ; 2 ; ¢posDpsEnd - 2 ) ) ) ;
+¢posDps = Position ( ¢lineRest ; ";" ; 1 ; 1 ) ;
+¢posDpsEnd = Case( ¢posDps ; Position ( ¢lineRest ; ";" ; ¢posDps+1 ; 1 ) ) ;
+¢dps = Case ( ¢posDpsEnd and IsEmpty( Substitute ( Left( ¢lineRest ; ¢posDps-1 ) ; Char(9) ; "" ) ) ; Trim( Middle ( ¢lineRest ; 2 ; ¢posDpsEnd - 2 ) ) ) ;
 
 /* expr & heredoc */
 ¢expr  = Trim ( Right ( ¢lineRest ; Length ( ¢lineRest ) - ¢posDpsEnd ) ) ;
 ¢is_heredoc = Position ( ¢expr ; "===" ; 1 ; 1 ) = 1 ;
 
 /* DEBUG */
-If=Case ( ¢debug ≥ 7 ; Let([
+If=Case ( ¢debug ≥ 5 ; Let([
     $$fmJAML__debug_log = List( $$fmJAML__debug_log ;
-    "line["&¢line_i&"]:" & ¢line ;
-    "- path:	" & Quote( $fmJAML__path ) ;
-    Case( ¢posEquals ;
-      List ( 
-        "- DPS	" & Quote( ¢dps ) ;
-        "- value:	" & ¢expr ;
-      )
-    )) ;
+    "line["&¢line_i&"] <- " & ¢line ;
+    Case( ¢debug ≥ 6 ; List ( 
+      "- path:	" & Quote( $fmJAML__path ) ;
+      Case ( ¢posEquals ; "- value:	" & ¢expr ) ;
+      Case ( not IsEmpty( ¢dps ) ; "- DPS	" & Quote( ¢dps ) );
+      ))
+    ) ;
 EndIf=0];0));
 
 
@@ -253,11 +251,12 @@ $fmJAML__path = While ([
     */
 
     Replace( $fmJAML__path ; ¢pos_start ; ¢pos+1 - ¢pos_start ; Middle ( $fmJAML__path_prev ; ¢pos_prev_start ; ¢pos_prev+1 - ¢pos_prev_start ) )
-& Case( ¢debug ; Let(
+& Case( ¢debug ≥ 7 ; Let(
 $$fmJAML__debug_log = List( $$fmJAML__debug_log ;
-    "PREV: " & $fmJAML__path_prev ;
-    "CURR: " & $fmJAML__path ;
-    Middle( $fmJAML__path ; ¢pos_start ; ¢pos+1 - ¢pos_start ) & " ----> " & Middle ( $fmJAML__path_prev ; ¢pos_prev_start ; ¢pos_prev+1 - ¢pos_prev_start )
+    "Path Inheritance: " ;
+    "- " & $fmJAML__path_prev ;
+    "- " & $fmJAML__path ;
+    "- " & Middle( $fmJAML__path ; ¢pos_start ; ¢pos+1 - ¢pos_start ) & " ----> " & Middle ( $fmJAML__path_prev ; ¢pos_prev_start ; ¢pos_prev+1 - ¢pos_prev_start )
   ) ;""))
 
     )
@@ -354,7 +353,7 @@ $fmJAML__present = "" ;
 $fmJAML__test = "" ;
 $fmJAML__skip = "" ;
 
-¢parse_dps = While (
+¢parse_dps = Case( not IsEmpty ( ¢dps ) ; While (
   [
 
   /*************
@@ -389,7 +388,7 @@ $fmJAML__skip = "" ;
       "- $fmJAML__path: "         & Quote ( $fmJAML__path ) ;
       "- $fmJAML__val: "          & Quote ( $fmJAML__val ) ;
       ) ;
-  EndIf=0];0));
+  EndIf=0];0)) ;
 
   /*****************
   Lazy data coercion
@@ -489,16 +488,17 @@ TNBAOUJDIMR
                        /* Interpret a pilcrow `\¶` as an EOL `¶`  */
                        ¢dpsValue = Case( ¢isRegex ; ¢dpsValue ; Substitute( ¢dpsValue ; "\¶" ; ¶ ) ) ;
 
+                       If=Case ( ¢debug ≥ 8 ; Let([
+                           $$fmJAML__debug_log = List ( $$fmJAML__debug_log ;
+                           "¢char=" & ¢char ;
+                           "$fmJAML__sticky_op: " & $fmJAML__sticky_op ;
+                           "$fmJAML__skip: " & $fmJAML__skip ;
+                           "¢dpsGTPos: " & ¢dpsGTPos ;
+                           "¢dpsReplaceOp: " & ¢dpsReplaceOp ;
+                           ) ;
+                       EndIf=0];"")) ;
+
                        /* Simply ignore the value if skipping…  */
-                       $$fmJAML__debug_log = List ( $$fmJAML__debug_log ;
-"$char=" & ¢char ;
-"$fmJAML__sticky_op: " & $fmJAML__sticky_op ;
-"$fmJAML__skip: " & $fmJAML__skip ;
-"¢dpsGTPos: " & ¢dpsGTPos ;
-"¢dpsReplaceOp: " & ¢dpsReplaceOp ;
-
-) ;
-
                         If=Case ( not $fmJAML__skip ; Let([
 
                             /* …otherwise, mark clause as not empty and process the value:  */
@@ -525,7 +525,6 @@ TNBAOUJDIMR
                                                      ; [¶ ; ¢dpsValue] /* CR -> replacement */
                                                      ) ;
 
-                                /* DEBUG fmJAML */
                                 If=Case ( ¢debug ≥ 7 ; Let([
                                      $$fmJAML__debug_log = List( $$fmJAML__debug_log ;
                                          "EOLs " & Case( IsEmpty ( ¢dpsValue ) ; "REMOVED" ; "REPLACED with '" & ¢dpsValue & "'") & 
@@ -709,7 +708,8 @@ TNBAOUJDIMR
   */
   ¢dpsPos = ¢dpsPos + $fmJAML__chars_read
 
-  ];""); /* End parseDTS */
+  ];"")
+  ); /* End parseDTS */
 
 
 /*****************
@@ -730,15 +730,6 @@ $fmJAML__dtype = Case(
 /******************
 Output line to JSON
 ******************/
-
-/* DEBUG fmJAML */
-If=Case ( ¢debug ≥ 6 ; Let([
-    $$fmJAML__debug_dtype = List( $$fmJAML__debug_dtype ; "line " & ¢line & ": " & $fmJAML__dtype ) ;
-    $$fmJAML__debug_log = List( $$fmJAML__debug_log ;
-    "-> $fmJAML__path:	" & Quote ( $fmJAML__path ) ;
-    Case( IsEmpty($fmJAML__path ) ; "PATH DROPPED" ) ;
-   ) ;
-EndIf=0];0));
 
 ¢result = Case (
 
@@ -780,6 +771,14 @@ EndIf=0];0));
 
   );
 
+If=Case( ¢debug ≥ 5 ; Let([
+    $$fmJAML__debug_dtype = List( $$fmJAML__debug_dtype ; "line " & ¢line & ": " & $fmJAML__dtype ) ;
+    $$fmJAML__debug_log = List( $$fmJAML__debug_log ; "line["&¢line_i&"] -> " & 
+      Case( IsEmpty($fmJAML__path ) ; "PATH DROPPED" ; Quote( ¢result ) ) ;
+      "--------"
+    ) ;
+EndIf=0];""));
+
 /*********
 NEXT ¢line
 **********
@@ -787,9 +786,7 @@ NEXT ¢line
 skipping multi-line heredocs, as necessary
 */
 
-¢line_i = ¢line_i + 1 + Case( ¢is_heredoc ; 1+ValueCount( ¢value ) ) ;
-
-$$fmJAML__debug_log = Case( ¢debug ≥ 9 ; List( $$fmJAML__debug_log ; "¢result after line " & (¢line_i-1) & ": " & Quote( ¢result ) & "¶=========" ) )
+¢line_i = ¢line_i + 1 + Case( ¢is_heredoc ; 1+ValueCount( ¢value ) )
 
 ];  
 
