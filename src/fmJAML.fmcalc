@@ -473,20 +473,25 @@ TNBAOUJDIMR
     Read the entire apostrophe-string, then either 
     - if skipping             -> ignore it, otherwise (mark the current clause as not empty and…)
     - if not-value (`!'…'`)   -> remove the value if present or
+    - if EOL op (`¶'…'`)      -> replace EOLs with value
+    - if divide op (`/`)      -> divide value
+    - if replace op (`>`)     -> (regex-)replace value
     - if normal value (`'…'`) -> set the value to the string.
     */
+    ¢char = "`" or
     ¢char = "'" or
     ¢mbs and /* if mbs is not present just ignore the regex op -> unknown char error below */
     ¢char = "~" ; Let([¢isRegex = ¢char = "~" ;
+                       $fmJAML__string_char = ¢char;
                        ¢dpsValueEnd = Position ( ¢dps & ¢char ; ¢char ; ¢dpsPos+1 ; 1 ) ;
                        $fmJAML__chars_read = ¢dpsValueEnd+1 - ¢dpsPos ;
-                       ¢dpsValue = Middle( ¢dps ; ¢dpsPos+1 ; $fmJAML__chars_read - 2 ) ;
-                       ¢dpsGTPos = Position ( ¢dps ; ">" ; ¢dpsValueEnd+1 ; 1 ) ;
-                       ¢dpsReplaceOp = ¢dpsGTPos and (¢dpsGTPos = ¢dpsValueEnd+1 or  IsEmpty ( Substitute ( Middle ( ¢dps ; ¢dpsValueEnd+1 ; ¢dpsGTPos - ¢dpsValueEnd - 1 ) ; [" ";""] ; [Char(9);""] ) ) ) ;
-
 
                        /* Interpret a pilcrow `\¶` as an EOL `¶`  */
-                       ¢dpsValue = Case( ¢isRegex ; ¢dpsValue ; Substitute( ¢dpsValue ; "\¶" ; ¶ ) ) ;
+                       ¢dpsValue = Substitute( Middle( ¢dps ; ¢dpsPos+1 ; $fmJAML__chars_read - 2 ) ; "\¶" ; ¶ ) ;
+                       ¢dpsValue = Case( ¢char = "`" ; Evaluate ( ¢dpsValue ) ; ¢dpsValue ) ;
+
+                       ¢dpsGTPos = Position ( ¢dps ; ">" ; ¢dpsValueEnd+1 ; 1 ) ;
+                       ¢dpsReplaceOp = ¢dpsGTPos and (¢dpsGTPos = ¢dpsValueEnd+1 or  IsEmpty ( Substitute ( Middle ( ¢dps ; ¢dpsValueEnd+1 ; ¢dpsGTPos - ¢dpsValueEnd - 1 ) ; [" ";""] ; [Char(9);""] ) ) ) ;
 
                        If=Case ( ¢debug ≥ 8 ; Let([
                            $$fmJAML__debug_log = List ( $$fmJAML__debug_log ;
@@ -498,33 +503,32 @@ TNBAOUJDIMR
                            ) ;
                        EndIf=0];"")) ;
 
-                       /* Simply ignore the value if skipping…  */
+                       /* Ignore the value if skipping…  */
                         If=Case ( not $fmJAML__skip ; Let([
 
-                            /* …otherwise, mark clause as not empty and process the value:  */
+                            /* …else mark clause as not empty and process the value… */
                             $fmJAML__clause_empty = "" ;
                             $fmJAML__val = Case(
 
-                              /* If not operation (!'value' / !~regex~) -> Remove value if present / regex-matched */
+                              /* Not op `!…`*/
                               $fmJAML__sticky_op = "!" ; Case ( Case ( ¢isRegex ;
                                   /* If regex match… */
-                                  Exact( Evaluate ( "MBS(\"RegEx.Match\";" & Quote ( ¢dpsValue ) & ";" & Quote ( $fmJAML__val ) & ")" ) ; 1 ) ;
-                                  /* If value is equal… (FIXME equal or exact?) */
+                                  Let([$fmJAML__eval = "MBS(\"RegEx.Match\";" & Quote ( ¢dpsValue ) & ";" & Quote ( $fmJAML__val ) & ")"
+                                      ]; Exact( Evaluate ( $fmJAML__eval ) ; 1 )
+                                      ) ;
+                                  /* If value is equal… (FIXME exact?) */
                                   $fmJAML__val = ¢dpsValue
                                 ) /* …REMOVE, otherwise keep */
                                   ; "" ; $fmJAML__val ) ;
 
-                              /* If eol operation (¶'…') -> Replace EOLs in value with the text */
+                              /* EOL op `¶'…'` -> Replace EOLs */
                               $fmJAML__sticky_op = "¶" ; Let([
-
                                 $fmJAML__sticky_op = "" ;
-
                                 vResult = Substitute ( $fmJAML__val
                                                      ; [Char(13) & Char(10);¶]       /* CRLF -> CR */
                                                      ; [Char(10);¶]                  /* LF -> CR */
                                                      ; [¶ ; ¢dpsValue] /* CR -> replacement */
                                                      ) ;
-
                                 If=Case ( ¢debug ≥ 7 ; Let([
                                      $$fmJAML__debug_log = List( $$fmJAML__debug_log ;
                                          "EOLs " & Case( IsEmpty ( ¢dpsValue ) ; "REMOVED" ; "REPLACED with '" & ¢dpsValue & "'") & 
@@ -532,18 +536,13 @@ TNBAOUJDIMR
                                        ) ;
                                 EndIf=0];""))
                                 ];
-
                                 vResult
-
                                 ) ;
 
-                              /* divide operation  (/'…') -> Divide the value by the text */
+                              /* Divide op  (/'…') */
                               $fmJAML__sticky_op = "/" ; Let([
-
                                 $fmJAML__sticky_op = "" ;
-
                                 vResult = $fmJAML__val / ¢dpsValue ;
-
                                 /* DEBUG fmJAML */
                                 If=Case ( ¢debug ≥ 7 ; Let([
                                      $$fmJAML__debug_log = List( $$fmJAML__debug_log ;
@@ -551,9 +550,7 @@ TNBAOUJDIMR
                                        ) ;
                                 EndIf=0];""))
                                 ];
-
                                 vResult
-
                                 ) ;
 
 
@@ -561,18 +558,32 @@ TNBAOUJDIMR
                               /* replace operation  ('…'>'…') -> Replace the value by the text */
                               $fmJAML__sticky_op = ">" ; Let([
                                 $fmJAML__sticky_op = "" ;
-                                vResult = Substitute ( $fmJAML__val ; $fmJAML__replace ; ¢dpsValue );
+                                vResult = Case( ¢isRegex ;
+                                    /* Regex replace */
+                                  Let([$fmJAML__eval = "MBS(\"RegEx.ReplaceAll\";" & Quote ( $fmJAML__val ) & ";" & Quote ( $fmJAML__replace ) & ";" & Quote ( ¢dpsValue ) & ";" & Quote ( $fmJAML__attributes ) & ")"
+                                      ]; Evaluate ( $fmJAML__eval )
+                                      ) ;
+                                    /* Substitute replace */
+                                    Substitute ( $fmJAML__val ; $fmJAML__replace ; ¢dpsValue )
+                                  );
                                 $fmJAML__replace = ""
-
                                 ];
                                 vResult
                                 ) ;
 
 
-                              /* else remember value to replace ('…'>) */
-                                ¢dpsReplaceOp ; Let([
-                                $fmJAML__replace = ¢dpsValue
+                              /* replace operation  ('…'>'…') -> Remember attributes */
+                              $fmJAML__sticky_op = "@" ; Let([
+                                $fmJAML__sticky_op = "" ;
+                                $fmJAML__attributes = ¢dpsValue
+                                ];
+                                $fmJAML__val /* don't change */
+                                ) ;
 
+                              /* else if followed by a `>` -> just remember value to replace ('…'>) and replaceOp */
+                              ¢dpsReplaceOp ; Let([
+                                $fmJAML__replace = ¢dpsValue ;
+                                $fmJAML__replaceOp = ¢char
                                 ];
                                 $fmJAML__val /* don't change */
                                 ) ;
@@ -599,7 +610,7 @@ TNBAOUJDIMR
 
 
     /* Perform the next operator (using Choose for speed)… */
-    Choose ( Position( "TNOABUJDIMR*!\¶/>?" ; Substitute( ¢char ; "-" ; "?" ) ; 1 ; 1 ) ;
+    Choose ( Position( "TNOABUJDIMR*!\¶?/" ; Substitute( ¢char ; ["-" ; "?"]; [">" ; "/"]; ["@" ; "/"]; ["#" ; "/"] ) ; 1 ; 1 ) ;
 
     /* ignore unknown char */ "" ; 
 
@@ -671,14 +682,6 @@ TNBAOUJDIMR
                           $fmJAML__sticky_op = Case( Middle ( ¢dps ; ¢dpsPos + 1 ; 1 )="1" ; "" ; $fmJAML__sticky_op )
                       ]; "" ) ;
 
-    /* Process Divide operator `/` */
-
-    /* "/" ;*/ Let( $fmJAML__sticky_op = "/" ; "" ) ;
-
-    /* Process Replace operator `>` */
-
-    /* ">" ;*/ Let( $fmJAML__sticky_op = ">" ; "" ) ;
-
     /* 
      * Process conditional operators:
      *
@@ -694,7 +697,16 @@ TNBAOUJDIMR
           $fmJAML__skip          = not $fmJAML__test ;
           $fmJAML__clause_empty  = 1 ;
           $fmJAML__sticky_op     = ""
-         ]; "" )
+         ]; "" ) ;
+
+    /*
+     * Process sticky operators
+     *  `/` Divide
+     *  `>` Replace
+     *  `@` Attributes
+     *  `#` Comment
+     */
+     Let( $fmJAML__sticky_op = ¢char ; "" )
 
     ) /* End Choose ( parseNextOp ) */
 

@@ -11,7 +11,7 @@
 
 `code from your keyboard`
 
-fmJAML - **F**ile**M**aker **Ja**SON **M**arkdown **L**anguage -  is a simple but powerful `path=value` templating language for writing JSON structures in a shorthand format suitable for both 'Machine and Mensch' - for AI and Me+U!
+fmJAML - **F**ile**M**aker **Ja**SON **M**arkdown **L**anguage -  is a simple but powerful `path=value` templating language for writing JSON structures in a shorthand format suitable for both 'Machine and Mensch' - for AI+ME+U!
 
 ```fmjaml
 [+].fmJAML
@@ -30,7 +30,7 @@ fmJAML - **F**ile**M**aker **Ja**SON **M**arkdown **L**anguage -  is a simple bu
 ===
 ```
 
-**Please note** that, whilst the `[+]…` array syntax has now somewhat stabilised, **🚧 fmJAML is still heavily under construction! 🚧**
+**Please note** that, **🚧 fmJAML is still heavily under construction! 🚧**
 
 fmJAML supports
 
@@ -68,7 +68,7 @@ fmJAML supports
 
 # For Example
 
-The fmJAML above creates the following JSON
+The fmJAML at the top of the page creates the following JSON
 
 ```json
 [
@@ -103,4 +103,13 @@ feedback
 
 fmJAML was originally conceived for specifying fmIDE Action Scripts in a concise format, but has been extracted from that context since it is (or aims to be) suitable for defining any kind of JSON.
 
-fmJAML is only 'FileMaker' JAML in so far that it is inspired by a cut down version the FileMaker JSONSetElement format, it uses FileMaker keyboard shortcut letters to specify data type, and a fmJAML custom function exists to interpret fmJAML, but apart from that it has no direct dependency on FileMaker and could be used outside of the FileMaker world.
+fmJAML is 'FileMaker' JAML in so far that it is inspired by a cut down version the FileMaker JSONSetElement format, it uses FileMaker keyboard shortcut letters to specify data type, and a fmJAML custom function exists to interpret fmJAML, but apart from that it has no direct dependency on FileMaker and could be used outside of the FileMaker world.
+
+See [AGENTS.md](AGENTS.md) for a more detailed overview of fmJAML syntax and features.
+
+# User Quotes
+
+2026-05-13 ChatGPT:
+
+> fmJAML has evolved from: “JSON shorthand” into “a compact line-oriented typed JSON transformation DSL for FileMaker” which is substantially more ambitious.
+> And honestly… quite successful now.

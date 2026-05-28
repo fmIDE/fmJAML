@@ -11,7 +11,7 @@
 
 **fmJAML** = **F**ile**M**aker **J**SON **A**s a **M**arkdown **L**angauge
 
-Since CF length is limited to 30000 chars this CF contains JUST the history; the main function is in CF fmJAML.
+Since CF length is limited to 30000 chars this CF contains JUST the history; the main function is the fmJAML CF.
 
 2026-05-15 @mrwatson-de v0.20
 - dps requires a closing `;` and is only processed when present
