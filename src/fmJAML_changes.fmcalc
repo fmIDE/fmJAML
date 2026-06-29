@@ -13,6 +13,26 @@
 
 Since CF length is limited to 30000 chars this CF contains JUST the history; the main function is the fmJAML CF.
 
+2026-06-29 @mrwatson-de v0.28
+- Rename $$fmJAML__debug* vars to  $$fmJAML_debug*
+- Rename $$fmJAML_debug_log to  $$fmJAML_log
+- Remove unnecessary debug code
+2026-06-17 @mrwatson-de v0.27
+- Fix #33: Add fmJAML: Value operators ==…===== (plus the origin of the cult characters Foo and Baz)
+2026-06-16 @mrwatson-de v0.26
+- Add `==` hereline operator to construct the string for the remaining text in the line
+  - Composes with the `===` heredoc operator to make it possible to quote multiline text: `= == === multiline text ===`
+- Don't coerce empty strings into JSON
+- Optimised CF space
+2026-06-13 @mrwatson-de v0.25
+- Optimised space
+2026-06-10 @mrwatson-de v0.24
+- Fix #28 automatic data type for simple numbers..
+2026-06-09 @mrwatson-de v0.23
+- Fix #27 DPS Parsing was truncating the value if it contained semi-colons.
+2026-06-08 @mrwatson-de v0.22
+- BREAKING CHANGE: Swap CF-parameters to be more logical and visually consistent (input JSON comes *before* appended fmJAML JSON, so parameter pOptionalInitialJSON must come before pFmJAML)
+2026-05-28 @mrwatson-de v0.21
 2026-05-15 @mrwatson-de v0.20
 - dps requires a closing `;` and is only processed when present
 - Consolidated debugging
