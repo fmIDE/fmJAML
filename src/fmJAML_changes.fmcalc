@@ -13,6 +13,8 @@
 
 Since CF length is limited to 30000 chars this CF contains JUST the history; the main function is the fmJAML CF.
 
+2026-06-30 @mrwatson-de v0.29
+- Automatically type "true" and "false" values as JSONBoolean
 2026-06-29 @mrwatson-de v0.28
 - Rename $$fmJAML__debug* vars to  $$fmJAML_debug*
 - Rename $$fmJAML_debug_log to  $$fmJAML_log

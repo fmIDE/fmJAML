@@ -21,7 +21,7 @@ aims to be a generalised templating system for creating most any JSON.
 
 @author: @mrwatson-de
 @created: 2026-03-10
-@version: 2026-06-29 @mrwatson-de v0.28
+@version: 2026-06-30 @mrwatson-de v0.29
 @history: See fmJAML_changes
 
 @param pOptionalInitialJSON (string) - a JSON that the fmJAML code builds upon or an empty string
@@ -727,6 +727,7 @@ $fmJAML__dtype = Case(
     ¢posEquals = 0    ; JSONObject ;
     IsEmpty ( ¢expr ) ; JSONNull ;
     GetAsNumber ( ¢expr ) = ¢expr ; JSONNumber ;
+    ¢expr = "true" or ¢expr = "false" ; JSONBoolean ;
       JSONString
   );
 
