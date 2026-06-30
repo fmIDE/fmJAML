@@ -67,7 +67,7 @@ fmJAML supports
     `[+].fmJAML` -> `[{ "fmJAML" : {} }]`
   - shorthand for adding object properties -> just leave the keys empty:  
     `[:]..is_cool = true` -> `[{ "fmJAML" : { "is_cool" : true } }]`
-- **value definition**
+- **dynamic value definition**
   - all values are evaluated  
     `[:]..is_for = "AI" & "U" & "ME"` -> `[{ "fmJAML" : { "is_for" : "AIUME" } }]`
   - shorthand for null values:  
