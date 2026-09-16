@@ -65,7 +65,7 @@ produces the following JSON
 }
 ```
 
-## 2. Path stubs
+## 2. Naked Object Paths and Null Values
 
 A 'naked' path with no `=` and no expression creates an empty object
 
@@ -122,19 +122,29 @@ defines a JSON array with one object with the keys "name" and "owns":
 ]
 ```
 
-Note: Whilst FileMaker only started supporting the `[+]/[:]` syntax in FM …er…21(?) … fmJAML supports the syntax in all versions of FileMaker.
+Warning: Don't use a `[:]` after a null-value path! This breaks the JSON, since there is no object to add to.
 
-## 4. Path Inheritance (..)
+Note: Whilst FileMaker only started supporting the `[+]/[:]` syntax in FM …er… around 21(?), fmJAML supports the syntax in all versions of FileMaker.
 
-An empty element, or with only whitespace, inherits the path from the previous path:
+## 4. Path Inheritance (`..`)
 
-```fmjaml
+An empty element `..`, or an element containing only whitespace, inherits the missing key from the previous path:
+
+```yaml
 [+].person
 [:]..name = "John"
 [:]..age  = "42"
 ```
 
-→ becomes:
+→ is equivalent to:
+
+```yaml
+[+].person
+[:].person.name = "John"
+[:].person.age  = "42"
+```
+
+→ produces this JOSN:
 
 ```json
 [
@@ -147,24 +157,29 @@ An empty element, or with only whitespace, inherits the path from the previous p
 ]
 ```
 
-Note:
-2026-04-28 @mrwatson-de: This is currently only correctl implemented for arrays. Object-Path inheritance is still under construction, so the following is only theoretical
+A leading `.` encodes child-properties of an object. Missing keys are inherited from the previous path:
 
-A leading . reuses the previous path:
-
-```fmjaml
+```yaml
 person
 .name = "John"
 .age  = "42"
 ```
 
-→ becomes:
+→ is equivalent to:
+
+```yaml
+person.name = "John"
+person.age  = "42"
+```
+
+→ produces this JOSN:
 
 ```json
 {
-  "person": {
-    "name": "John",
-    "age": "42"
+  "person" : 
+  {
+    "age" : "42",
+    "name" : "John"
   }
 }
 ```
