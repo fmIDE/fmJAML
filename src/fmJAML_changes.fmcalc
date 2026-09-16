@@ -13,6 +13,17 @@
 
 Since CF length is limited to 30000 chars this CF contains JUST the history; the main function is the fmJAML CF.
 
+2026-09-16 @mrwatson-de v0.33
+- Fix #25: Support for Objects and Multiple Path Ellipsis
+- Fix #38 Fail Fast when invalid JSON produced
+2026-09-03 @mrwatson-de v0.32
+- Fix #37: All variables now in `lower_snake_case`
+2026-08-24 @mrwatson-de v0.31.1
+- Reduce comments
+2026-07-10 @mrwatson-de v0.31
+- Remove the v from the version
+2026-07-09 @mrwatson-de v0.30
+- Add #36 `;info;` and `;version;`
 2026-06-30 @mrwatson-de v0.29
 - Automatically type "true" and "false" values as JSONBoolean
 2026-06-29 @mrwatson-de v0.28

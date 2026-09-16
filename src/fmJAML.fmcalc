@@ -21,17 +21,17 @@ aims to be a generalised templating system for creating most any JSON.
 
 @author: @mrwatson-de
 @created: 2026-03-10
-@version: 2026-06-30 @mrwatson-de v0.29
+@version: See ¢INFO
 @history: See fmJAML_changes
 
 @param pOptionalInitialJSON (string) - a JSON that the fmJAML code builds upon or an empty string
 @param pFmJAML (string) - the fmJAML code to express your JSON in FileMaker
 @returns json (string) - the JSON constructed from the fmJAML string
-@input $fmJAML_debug - fmLog357 log level to use: 0/""=none, 3=errors, 5=info, 7=debug (See fmLog357 for more).
-@output $$fmJAML_log (string) - debugging log
-@output $$fmJAML_debug_dtype (string) - just the data types
+@input $fmjaml_debug - fmLog357 log level to use: 0/""=none, 3=errors, 5=info, 7=debug (See fmLog357 for more).
+@output $$fmjaml_log (string) - debugging log
+@output $$fmjaml_debug_dtype (string) - just the data types
 
-Note: Please do not use the reserved prefix `($)$fmJAML__` in your variables.
+Note: Please do not use the reserved prefix `($)$fmjaml__` in your variables.
 */
 
 /*******************
@@ -40,23 +40,24 @@ Process fmJAML lines
 
 While (
 [
+¢INFO = "2026-09-16 @mrwatson-de v0.33";
 
 /* input param */
 ¢result = pOptionalInitialJSON ;
 ¢lines = pFmJAML ;
 
 /* input vars */
-¢debug = Case( not IsEmpty ( $fmJAML_debug ) ; $fmJAML_debug ; Get ( ActiveModifierKeys ) ) ;
+¢debug = Case( not IsEmpty ( $fmjaml_debug ) ; $fmjaml_debug ; Get ( ActiveModifierKeys ) ) ;
 /* FIXME - Using the modifier keys for log level is a neat trick for quick debugging but a bit of a fudge. */
 
 /* internal vars */
-$fmJAML__path_prev = "" ;
+$fmjaml__path_prev = "" ;
 ¢mbs = Evaluate ( "MBS(\"Version\")" ) ≠ "?" ;
 ¢fmp_v_maj = 0 + GetValue ( Substitute ( Get ( ApplicationVersion ) ; "." ; ¶ ) ; 1 ) ;
 
 /* output vars */
-$$fmJAML_debug_dtype = "" ;
-$$fmJAML_log = Case( ¢debug ≥ 6 ; "¢debug: " & ¢debug & ¶ & "¢mbs: " & ¢mbs & ¶ ) ;
+$$fmjaml_debug_dtype = "" ;
+$$fmjaml_log = Case( ¢debug ≥ 6 ; "¢debug: " & ¢debug & ¶ & "¢mbs: " & ¢mbs & ¶ ) ;
 
 /* Constants */
 ¢TAB = Char(9) ;
@@ -71,7 +72,7 @@ $$fmJAML_log = Case( ¢debug ≥ 6 ; "¢debug: " & ¢debug & ¶ & "¢mbs: " & ¢
 ¢line_i = 1;
 ¢line_n = ValueCount ( ¢lines )
 
-]; ¢line_i <= ¢line_n ;[
+]; ¢line_i <= ¢line_n and Left( ¢result ; 1 ) ≠ "?" ;[
 
 ¢line  = GetValue ( ¢lines ; ¢line_i );
 /* trim horizontally */
@@ -90,7 +91,7 @@ $$fmJAML_log = Case( ¢debug ≥ 6 ; "¢debug: " & ¢debug & ¶ & "¢mbs: " & ¢
 
 /* split at `=` and trim path horizontally right*/
 ¢posEquals = Position( ¢line ; "=" ; 1 ; 1 ) ;
-$fmJAML__path = Case( not ¢posEquals ; ¢line ; While(
+$fmjaml__path = Case( not ¢posEquals ; ¢line ; While(
   [
 
   ¢result = ¢line ;
@@ -124,19 +125,19 @@ Left ( ¢expr ; 3 ) = "===" ;  1 ; // pos -> read block, 1*Quote()
 Left ( ¢expr ; 2 ) = "==" ; -1 ; // neg -> read line,  1*Quote() 
 /* Note: A single "=" here is actually a syntax error … just ignore it and let the Evaluation pick it up */
 );
-$fmJAML__inc = 0 ;
+$fmjaml__inc = 0 ;
 
 /* DEBUG */
 If=Case ( ¢debug ≥ 5 ; Let([
-    $$fmJAML_log = List( $$fmJAML_log ;
-    "line["&¢line_i&"] <- " & ¢line ;
-    "- lineRest " & ¢lineRest ;
-    Case( ¢debug ≥ 6 ; List ( 
-      "- path:	" & Quote( $fmJAML__path ) ;
-      Case ( not IsEmpty( ¢dps ) ; "- dps:	" & Quote( ¢dps ) );
-      Case ( ¢posEquals ; "- value:	" & ¢expr ) ;
-      ))
-    ) ;
+  $$fmjaml_log = List( $$fmjaml_log ;
+  "line["&¢line_i&"] <- " & ¢line ;
+  "- lineRest " & ¢lineRest ;
+  Case( ¢debug ≥ 6 ; List ( 
+    "- path:  " & Quote( $fmjaml__path ) ;
+    Case ( not IsEmpty( ¢dps ) ; "- dps:  " & Quote( ¢dps ) );
+    Case ( ¢posEquals ; "- value:  " & ¢expr ) ;
+    ))
+  ) ;
 EndIf=0];0));
 
 
@@ -144,126 +145,104 @@ EndIf=0];0));
 EXPAND PATH
 ***********
 
-Support for avoiding key-repetition by using empty keys between dots:
+Support for avoiding key-repetition by inheriting empty keys from the previous line (ignoring white space):
 
-[+].	Show Custom Dialog.message="Hello"
-[:].	.title="DEBUG"
+For example:
 
-becomes
-
-[+].	Show Custom Dialog.message="Hello"
-[:].	Show Custom Dialog.title="DEBUG"
-
-…but we must also support indentation:
-
-[+].		Show Custom Dialog.message="Hello"
-[:].		.title="DEBUG"
+Execute FileMaker Data API.target = "$result"
+.request.layouts = "fmIDE Tests Light"
+.       .limit = 1
 
 becomes
 
-[+].		Show Custom Dialog.message="Hello"
-[:].		Show Custom Dialog.title="DEBUG"
+Execute FileMaker Data API.target = "$result"
+Execute FileMaker Data API.request.layouts = "fmIDE Tests Light"
+Execute FileMaker Data API.request.limit = 1
 
-Algorithm:
+Method:
 
-1. Find the first dot
-2. then count further dots (andc array `[`/`]` in the immedaitely following characters, ignoring white space (in ¢dot_count).
-3. finally, if there are succedding dots (¢dot_count > 1), replace dots 1…j in the current path 
-   with the keys from the previous path between dots 1 and j.
+1. ¢path_nows removes the white space
+2. ¢path_dots also converts all delimiters to dots to simplify adjacent dot recognition.
+3. Missing keys are inherited directly into $fmjaml_path (requiring ¢pos_path to be adjusted)
+4. [+]/[:] is resolved in the resulting path before being used for the next line
 
+Example @ line 3 above:
+
+prev = `Execute FileMaker Data API.request.layouts`
+path = `.       .limit`
+nows = `..limit`
+dots = `..limit`
 */
 
-¢path_no_ws = Substitute( $fmJAML__path ; [" " ; ""] ; [¢TAB ; ""] ) /*& "."*/ ;
-$fmJAML__path = While ([
+If = Case( not ¢isLineEmpty ; While ([
 
-  ¢pos_no_ws = Position ( ¢path_no_ws ; "." ; 1 ; 1 ) ;
-  ¢dot_count = 1
+  ¢path_nows = Substitute ( $fmjaml__path ; [" " ; ""] ; [¢TAB ; ""] ) ;
+  ¢path_dots = Substitute ( ¢path_nows ; ["[" ; "."] ; ["]" ; "."] ) ;
 
-  ]; Position( ".[]" ; Middle ( ¢path_no_ws ; ¢pos_no_ws + ¢dot_count ; 1 ) ; 1 ; 1 ) ; [
+  ¢pos_path = 0 ;
+  ¢pos_prev = 0 ;
+  ¢pos_dot = 0 ;
+  
+  ¢pos_dot_next  = Position ( ¢path_dots ; "." ; ¢pos_dot + 1 ; 1 )
+  
+  ]; ¢pos_dot_next ; [
+  
+  /*
 
-  ¢dot_count = ¢dot_count + 1
+  1. Locate the next delimiter:
+         v-¢pos_dot
+  dots = "..limit"
+          ^-¢pos_dot_next
 
-  ];
+  2. Identify delimiter:
+          v-¢delim -> '.'
+  nows = "..limit"
 
-  Case(
-     /* No key inheritance */
+  3. Locate delimiter in path:
+         v-¢pos_path
+  path = ".       .limit"
+          ^-¢pos_path_next
 
-    ¢dot_count = 1 ; $fmJAML__path ;
+  4. Locate delimiter in prev-path:
+         v-¢pos_prev
+  prev = "Execute FileMaker Data API.request.layouts"
+                                    ^-¢pos_prev_next
+  key  = "**************************"
 
-    /*****************
-    Hydrate empty keys
-    ******************
-    
-    from previous path
+  /* 5. Inherit key from previous path only if dots adjacent */
 
-    FIXME
-    - Document existing support for minimal delimiters, e.g.
-      ```
-      [+].Show Custom Dialog.message="Hi"
-      [:]..button[+]="Yes"
-      [:].         ]="Maybe"
-      [:].         ]="No"
-      ```
-    - Support ['path.with.dots&[co]']
-    
-    Iterarate over the path parts '..[].'
-    */ 
+  */
+  ¢delim         = Middle ( ¢path_nows ; ¢pos_dot_next ; 1 ) ;
 
-    While(
-    [
+  ¢pos_path_next = Position ( $fmjaml__path      ; ¢delim ; ¢pos_path + 1 ; 1 ) ;
+  ¢pos_prev_next = Position ( $fmjaml__path_prev ; ¢delim ; ¢pos_prev + 1 ; 1 ) ;
+  ¢pos_prev_next = Case ( ¢pos_prev_next ; ¢pos_prev_next ; Length ( $fmjaml__path_prev ) + 1 ) ;
+  
+  ¢inherit = ¢pos_dot_next = ¢pos_dot + 1 ;
+  ¢key_prev = Case ( ¢inherit ; /* Get previous key */
+    Middle ( $fmjaml__path_prev ; ¢pos_prev + 1 ; ¢pos_prev_next - ¢pos_prev - 1 )
+  ) ;
+  $fmjaml__path = Case ( not ¢inherit ; $fmjaml__path ; /* Replace empty key */
+    Replace( $fmjaml__path      ; ¢pos_path + 1 ; ¢pos_path_next - ¢pos_path - 1 ; ¢key_prev )
+  ) ;
+  debug=Case ( ¢debug ≥ 7 and ¢inherit ; Let( $$fmjaml_log = List( $$fmjaml_log ;
+  "¶Path Inheritance: " ;
+  ¢line_i-1 & ":	" & Replace( Replace( $fmjaml__path_prev ; ¢pos_prev_next ; 1 ; "}" ) ; ¢pos_prev ; 1 ; "{" ) ;
+  ¢line_i   & ":	" & Replace( Replace( $fmjaml__path      ; ¢pos_path_next ; 1 ; "}" ) ; ¢pos_path ; 1 ; "{" ) ;
+  "key:	" & ¢key_prev ;
+  "delim:	" & ¢delim ;
+  "delims:	" & Replace( ¢path_nows ; ¢pos_dot_next ; 1 ; "•" )
+  ) ; "")) ;
 
-    /* Starting with (and remembering) the first dot (FIXME: delimiter?)… */
-    
-    ¢pos = Position ( $fmJAML__path ; "." ; 1 ; 1 ) ;
-    ¢pos_prev = Position ( $fmJAML__path_prev ; "." ; 1 ; 1 ) ;
-    ¢pos_start = ¢pos ;
-    ¢pos_prev_start = ¢pos_prev ;
+  /* 6. Make the next dot the current dot in dots + prev + path */
+  ¢pos_dot  = ¢pos_dot_next ;
+  ¢pos_prev = ¢pos_prev_next ;
+  ¢pos_path = Case( ¢inherit ; ¢pos_path + Length ( ¢key_prev ) + 1 ;  ¢pos_path_next ) ;
 
-    /* …FOR EACH succesive delimiter… */
+  /* 7. Continue with the next dot */
+  ¢pos_dot_next  = Position ( ¢path_dots ; "." ; ¢pos_dot + 1 ; 1 ) ;
 
-    ¢dot_offset= 2
-
-    ]; ¢dot_offset<= ¢dot_count ;[
-
-    ¢char = Middle( ¢path_no_ws ; ¢pos_no_ws + ¢dot_offset-1 ; 1 ) ;
-
-    /* Locate the delimiter in the current and previous path */
-    
-    ¢pos = Position ( $fmJAML__path ; ¢char ; ¢pos+1 ; 1 ) ;
-    ¢pos_prev = Position ( $fmJAML__path_prev ; ¢char ; ¢pos_prev+1 ; 1 ) ;
-
-    ¢dot_offset= ¢dot_offset+ 1
-    
-    ];
-
-    /* Insert the missing keys from the old path into the new path */
-    
-    /* If the *entirity* of the previous path is being repeated, 
-       FIXME - AND if it replacing the entirity of 
-       ignore the final "."
-    ¢pos_prev_end   = ¢pos_prev_end - Case(
-      ¢pos_prev_end = Length( $fmJAML__path_prev ) and
-      ¢pos + ¢dot_count = Length( ¢path_no_ws ) ; 1 );
-    ¢pos_prev_end   = ¢pos_prev_end - Case( ¢pos_prev_end = Length( $fmJAML__path_prev ) ; 1 ) ;
-    */
-
-    Replace( $fmJAML__path ; ¢pos_start ; ¢pos+1 - ¢pos_start ; Middle ( $fmJAML__path_prev ; ¢pos_prev_start ; ¢pos_prev+1 - ¢pos_prev_start ) )
-& Case( ¢debug ≥ 7 ; Let(
-$$fmJAML_log = List( $$fmJAML_log ;
-    "Path Inheritance: " ;
-    "- " & $fmJAML__path_prev ;
-    "- " & $fmJAML__path ;
-    "- " & Middle( $fmJAML__path ; ¢pos_start ; ¢pos+1 - ¢pos_start ) & " ----> " & Middle ( $fmJAML__path_prev ; ¢pos_prev_start ; ¢pos_prev+1 - ¢pos_prev_start )
-  ) ;""))
-
-    )
-
-  )
-
-  );
-
-$fmJAML__path = Case( Right( $fmJAML__path ; 1 ) = "." ; Left( $fmJAML__path ; Length( $fmJAML__path ) -1 ) ; $fmJAML__path ) ; 
-
+EndIf=0];0)) ;
 
 
 /**************
@@ -271,32 +250,28 @@ Support for [+] and [:] in FileMaker versions < 21
 ***************
 */
 
-$fmJAML__path = Case( ¢fmp_v_maj ≥ 21 ; $fmJAML__path ;
+$fmjaml__path = Case( ¢fmp_v_maj ≥ 21 ; $fmjaml__path ; While ([
 
-    While (
-    [
+  ¢resolved_path = $fmjaml__path ;
+  ¢pos_plus  = Position ( ¢resolved_path ; "[+]" ; 1 ; 1 ) ;
+  ¢pos_colon = Position ( ¢resolved_path ; "[:]" ; 1 ; 1 ) 
 
-    ¢resolved_path = $fmJAML__path ;
-    ¢pos_plus  = Position ( ¢resolved_path ; "[+]" ; 1 ; 1 ) ;
-    ¢pos_colon = Position ( ¢resolved_path ; "[:]" ; 1 ; 1 ) 
+  ] ; ¢pos_plus or ¢pos_colon ; [
 
-    ] ; ¢pos_plus or ¢pos_colon ; [
+  ¢pos = Case ( ¢pos_plus and ¢pos_colon ; Min ( ¢pos_plus ; ¢pos_colon ) ; ¢pos_plus + ¢pos_colon ) ;
+  ¢array_length  = ValueCount ( JSONListKeys ( ¢result ; Left ( ¢resolved_path ; ¢pos - 1 ) ) ) ;
+  ¢index = ¢array_length - ( ¢pos = ¢pos_colon ) ;
+  ¢resolved_path = Replace ( ¢resolved_path ; ¢pos + 1 ; 1 ; Max( 0 ; ¢index ) ) ;
+  ¢pos_plus  = Position ( ¢resolved_path ; "[+]" ; ¢pos+3 ; 1 ) ;
+  ¢pos_colon = Position ( ¢resolved_path ; "[:]" ; ¢pos+3 ; 1 )
 
-    ¢pos = Case ( ¢pos_plus and ¢pos_colon ; Min ( ¢pos_plus ; ¢pos_colon ) ; ¢pos_plus + ¢pos_colon ) ;
-    ¢array_length  = ValueCount ( JSONListKeys ( ¢result ; Left ( ¢resolved_path ; ¢pos - 1 ) ) ) ;
-    ¢index = ¢array_length - ( ¢pos = ¢pos_colon ) ;
-    ¢resolved_path = Replace ( ¢resolved_path ; ¢pos + 1 ; 1 ; Max( 0 ; ¢index ) ) ;
-    ¢pos_plus  = Position ( ¢resolved_path ; "[+]" ; ¢pos+3 ; 1 ) ;
-    ¢pos_colon = Position ( ¢resolved_path ; "[:]" ; ¢pos+3 ; 1 )
+  ];
 
-    ];
+  ¢resolved_path
 
-    ¢resolved_path
+  )) ;
 
-    )
-  ) ;
-
-$fmJAML__path_prev = Case( ¢isLineEmpty ; $fmJAML__path_prev ; $fmJAML__path & "." ) ;  
+$fmjaml__path_prev = Case( ¢isLineEmpty ; $fmjaml__path_prev ; $fmjaml__path ) ;  
 
 /******
 heredoc
@@ -305,7 +280,7 @@ heredoc
 Process value or heredoc
 */
 
-$fmJAML__val = Case (
+$fmjaml__val = Case (
     ¢isLineEmpty ; "" ;
 
     /* no expression -> empty object */
@@ -321,7 +296,7 @@ $fmJAML__val = Case (
           ¢pos_start = Length( LeftValues ( ¢lines ; ¢line_i ) )+1 ;
           ¢pos_end   = Position ( ¢lines ; ¢marker ; ¢pos_start ; 1 ) ;
           ¢heredoc   = Middle( ¢lines ; ¢pos_start ; ¢pos_end - ¢pos_start /* and remove last EOL: */ -1 ) ;
-          $fmJAML__inc = ValueCount( ¢heredoc )+1
+          $fmjaml__inc = ValueCount( ¢heredoc )+1
           ];
           ¢heredoc
           )
@@ -344,7 +319,7 @@ $fmJAML__val = Case (
 Calculate the line-increment value based on the number of lines consumed by the heredoc.
 This is required for the next section where the DPS needs to drop the key if an empty condition (=EOF) is reached
 */
-¢line_inc     = 1 + $fmJAML__inc ;
+¢line_inc     = 1 + $fmjaml__inc ;
 
 
 /******
@@ -354,15 +329,19 @@ This is required for the next section where the DPS needs to drop the key if an 
 Process ;«DPS»;
 */
 
-$fmJAML__dtype = "" ;
-$fmJAML__sticky_op = "" ;
-$fmJAML__context = "" ;
-$fmJAML__clause_empty = "" ;
-$fmJAML__present = "" ;
-$fmJAML__test = "" ;
-$fmJAML__skip = "" ;
-
-¢parse_dps = Case( not IsEmpty ( ¢dps ) ; While (
+$fmjaml__dtype = "" ;
+$fmjaml__sticky_op = "" ;
+$fmjaml__context = "" ;
+$fmjaml__clause_empty = "" ;
+$fmjaml__present = "" ;
+$fmjaml__test = "" ;
+$fmjaml__skip = "" ;
+¢r = Case( not IsEmpty ( FilterValues( ¢dps ; "info¶version¶==info¶==version" ) ) ; Let([
+  ¢r = Case ( Position ( ¢dps ; "info" ; 1 ; 1 ) ; ¢INFO ; Substitute( RightWords ( ¢INFO ; 1 ) ; "v" ; "" ) ) ;
+  $fmjaml__val = Case ( Position ( ¢dps ; "==" ; 1 ; 1 ) ; Quote ( ¢r )  ; ¢r ) ;
+  $fmjaml__dtype = JSONString
+  ];0) ;
+  not IsEmpty ( ¢dps ) ; While (
   [
 
   /*************
@@ -375,27 +354,27 @@ $fmJAML__skip = "" ;
   ¢dpsPos = 1 ;
   ¢dpsLength = Length( ¢dps )
 
-  ]; ¢dpsPos <= ¢dpsLength+1 and not IsEmpty ( $fmJAML__path );[
+  ]; ¢dpsPos <= ¢dpsLength+1 and not IsEmpty ( $fmjaml__path );[
 
   ¢char = Middle ( ¢dps ; ¢dpsPos ; 1 ) ;
-  $fmJAML__chars_read = 1 ;
+  $fmjaml__chars_read = 1 ;
 
   ¢eof = ¢dpsPos > ¢dpsLength ;
   ¢eoClause = ¢eof or Position ( "?-:," ; ¢char ; 1 ; 1 ) ;
 
   /* DEBUG fmJAML */
   If=Case ( ¢debug ≥ 7 ; Let([
-      $$fmJAML_log = List( $$fmJAML_log ;
+      $$fmjaml_log = List( $$fmjaml_log ;
       "DPS[" & ¢dpsPos & "]: "  & Quote ( ¢char ) & Case( ¢eof ; " («EOF»)" );
-      "- $fmJAML__dtype: "        & $fmJAML__dtype ;
-      "- $fmJAML__present: "      & Quote ( $fmJAML__present ) ;
-      "- $fmJAML__test: "         & Quote ( $fmJAML__test ) ;
-      "- $fmJAML__skip: "         & Quote ( $fmJAML__skip ) ;
-      "- $fmJAML__clause_empty: " & Quote ( $fmJAML__clause_empty ) ;
-      "- $fmJAML__sticky_op: "    & Quote ( $fmJAML__sticky_op ) ;
-      "- $fmJAML__context: "      & Quote ( $fmJAML__context ) ;
-      "- $fmJAML__path: "         & Quote ( $fmJAML__path ) ;
-      "- $fmJAML__val: "          & Quote ( $fmJAML__val ) ;
+      "- $fmjaml__dtype: "        & $fmjaml__dtype ;
+      "- $fmjaml__present: "      & Quote ( $fmjaml__present ) ;
+      "- $fmjaml__test: "         & Quote ( $fmjaml__test ) ;
+      "- $fmjaml__skip: "         & Quote ( $fmjaml__skip ) ;
+      "- $fmjaml__clause_empty: " & Quote ( $fmjaml__clause_empty ) ;
+      "- $fmjaml__sticky_op: "    & Quote ( $fmjaml__sticky_op ) ;
+      "- $fmjaml__context: "      & Quote ( $fmjaml__context ) ;
+      "- $fmjaml__path: "         & Quote ( $fmjaml__path ) ;
+      "- $fmjaml__val: "          & Quote ( $fmjaml__val ) ;
       ) ;
   EndIf=0];0)) ;
 
@@ -406,23 +385,23 @@ $fmJAML__skip = "" ;
   Convert the value to the target data-type, but first when a processing operator (`!`/`?`/`-`) is encountered
 TNBAOUJDIMR
   */
-  ¢notIE = not IsEmpty ( $fmJAML__val ) ;
+  ¢notIE = not IsEmpty ( $fmjaml__val ) ;
   ¢r = Case(
-    ¢eof or IsEmpty ( $fmJAML__dtype ) ; "" ;
+    ¢eof or IsEmpty ( $fmjaml__dtype ) ; "" ;
     Position ( "!?-" ; ¢char ; 1 ; 1 ) = 0 ; "" ;
-    Let( $fmJAML__val = Case( 
-    $fmJAML__dtype = JSONString     ; GetAsText      ( $fmJAML__val ) ;
-    $fmJAML__dtype = JSONNumber     ; GetAsNumber    ( $fmJAML__val ) ;
-    $fmJAML__dtype = JSONObject     ; Case( ¢notIE ; JSONGetElement ( $fmJAML__val ; "" ) ) ;
-    $fmJAML__dtype = JSONArray      ; Case( ¢notIE ; JSONGetElement ( $fmJAML__val ; "" ) ) ;
-    $fmJAML__dtype = JSONBoolean    ; GetAsBoolean   ( $fmJAML__val ) ;
-    $fmJAML__dtype = JSONNull       ; ""                              ;
-    $fmJAML__dtype = JSONRaw        ; Case( ¢notIE ; JSONGetElement ( $fmJAML__val ; "" ) ) ;
-    $fmJAML__dtype = ¢JSONDate      ; GetAsDate      ( $fmJAML__val ) ;
-    $fmJAML__dtype = ¢JSONTime      ; GetAsTime      ( $fmJAML__val ) ;
-    $fmJAML__dtype = ¢JSONTimestamp ; GetAsTimestamp ( $fmJAML__val ) ;
+    Let( $fmjaml__val = Case( 
+    $fmjaml__dtype = JSONString     ; GetAsText      ( $fmjaml__val ) ;
+    $fmjaml__dtype = JSONNumber     ; GetAsNumber    ( $fmjaml__val ) ;
+    $fmjaml__dtype = JSONObject     ; Case( ¢notIE ; JSONGetElement ( $fmjaml__val ; "" ) ) ;
+    $fmjaml__dtype = JSONArray      ; Case( ¢notIE ; JSONGetElement ( $fmjaml__val ; "" ) ) ;
+    $fmjaml__dtype = JSONBoolean    ; GetAsBoolean   ( $fmjaml__val ) ;
+    $fmjaml__dtype = JSONNull       ; ""                              ;
+    $fmjaml__dtype = JSONRaw        ; Case( ¢notIE ; JSONGetElement ( $fmjaml__val ; "" ) ) ;
+    $fmjaml__dtype = ¢JSONDate      ; GetAsDate      ( $fmjaml__val ) ;
+    $fmjaml__dtype = ¢JSONTime      ; GetAsTime      ( $fmjaml__val ) ;
+    $fmjaml__dtype = ¢JSONTimestamp ; GetAsTimestamp ( $fmjaml__val ) ;
     /* no coercion to container */
-    $fmJAML__val
+    $fmjaml__val
     ) ; "" )
   );
 
@@ -438,19 +417,19 @@ TNBAOUJDIMR
 
 
     /* Lazily drop path, if necessary, which is when… */
-    ¢eoClause and $fmJAML__clause_empty and /* …completed, empty (or missing) clause and… */ 
-    Case( $fmJAML__present ;
+    ¢eoClause and $fmjaml__clause_empty and /* …completed, empty (or missing) clause and… */ 
+    Case( $fmjaml__present ;
       /* …value present and … explicitly empty presence clause: */ 
-      $fmJAML__context = "?" and ¢char = ":"    /* value + "?💢:" -> */
+      $fmjaml__context = "?" and ¢char = ":"    /* value + "?💢:" -> */
       or
-      $fmJAML__context = "-:" ;                 /* value + "-:💢" -> */
+      $fmjaml__context = "-:" ;                 /* value + "-:💢" -> */
 
       /* …value empty and… */
-      $fmJAML__context = "?" and ¢char ≠ ":"    /* empty + "?💢" (implicit) -> */
+      $fmjaml__context = "?" and ¢char ≠ ":"    /* empty + "?💢" (implicit) -> */
       or
-      $fmJAML__context = "?:"                   /* empty + "?:💢" (explicit) -> */
+      $fmjaml__context = "?:"                   /* empty + "?:💢" (explicit) -> */
     )
-    ; Let( $fmJAML__path = "" ; "" ) ;          /* -> drop value + path! */ 
+    ; Let( $fmjaml__path = "" ; "" ) ;          /* -> drop value + path! */ 
 
     /* Ignore EOF or white space */
 
@@ -461,22 +440,22 @@ TNBAOUJDIMR
     /* Process end-skip chars (`:` / `,`) *before* processing any skipping */
 
     ¢char = "," ; Let ([/* End conditional scope */
-                        $fmJAML__present = "" ;
-                        $fmJAML__test = "" ;
-                        $fmJAML__skip = "" ;
-                        $fmJAML__clause_empty = "" ;
-                        $fmJAML__context = "" ;
-                        $fmJAML__sticky_op = ""
+                        $fmjaml__present = "" ;
+                        $fmjaml__test = "" ;
+                        $fmjaml__skip = "" ;
+                        $fmjaml__clause_empty = "" ;
+                        $fmjaml__context = "" ;
+                        $fmjaml__sticky_op = ""
                        ]; "" ) ;
     ¢char = ":" ; Let ([/* otherwise clause */
-                        $fmJAML__context = Case(
-                          $fmJAML__context = "?" ; "?:" ;
-                          $fmJAML__context = "-" ; "-:" ;
-                          $fmJAML__context
+                        $fmjaml__context = Case(
+                          $fmjaml__context = "?" ; "?:" ;
+                          $fmjaml__context = "-" ; "-:" ;
+                          $fmjaml__context
                           ) ;
-                        $fmJAML__skip = $fmJAML__test ;
-                        $fmJAML__clause_empty  = 1 ;
-                        $fmJAML__sticky_op = ""
+                        $fmjaml__skip = $fmjaml__test ;
+                        $fmjaml__clause_empty  = 1 ;
+                        $fmjaml__sticky_op = ""
                        ]  ; "" ) ;
 
     /*****************
@@ -495,49 +474,49 @@ TNBAOUJDIMR
     ¢char = "'" or
     ¢mbs and /* if mbs is not present just ignore the regex op -> unknown char error below */
     ¢char = "~" ; Let([¢isRegex = ¢char = "~" ;
-                       $fmJAML__string_char = ¢char;
+                       $fmjaml__string_char = ¢char;
                        ¢dpsValueEnd = Position ( ¢dps & ¢char ; ¢char ; ¢dpsPos+1 ; 1 ) ;
-                       $fmJAML__chars_read = ¢dpsValueEnd+1 - ¢dpsPos ;
+                       $fmjaml__chars_read = ¢dpsValueEnd+1 - ¢dpsPos ;
 
                        /* Interpret a pilcrow `\¶` as an EOL `¶`  */
-                       ¢dpsValue = Substitute( Middle( ¢dps ; ¢dpsPos+1 ; $fmJAML__chars_read - 2 ) ; "\¶" ; ¶ ) ;
+                       ¢dpsValue = Substitute( Middle( ¢dps ; ¢dpsPos+1 ; $fmjaml__chars_read - 2 ) ; "\¶" ; ¶ ) ;
                        ¢dpsValue = Case( ¢char = "`" ; Evaluate ( ¢dpsValue ) ; ¢dpsValue ) ;
 
                        ¢dpsGTPos = Position ( ¢dps ; ">" ; ¢dpsValueEnd+1 ; 1 ) ;
                        ¢dpsReplaceOp = ¢dpsGTPos and (¢dpsGTPos = ¢dpsValueEnd+1 or  IsEmpty ( Substitute ( Middle ( ¢dps ; ¢dpsValueEnd+1 ; ¢dpsGTPos - ¢dpsValueEnd - 1 ) ; [" ";""] ; [Char(9);""] ) ) ) ;
 
                        If=Case ( ¢debug ≥ 8 ; Let([
-                           $$fmJAML_log = List ( $$fmJAML_log ;
+                           $$fmjaml_log = List ( $$fmjaml_log ;
                            "¢char=" & ¢char ;
-                           "$fmJAML__sticky_op: " & $fmJAML__sticky_op ;
-                           "$fmJAML__skip: " & $fmJAML__skip ;
+                           "$fmjaml__sticky_op: " & $fmjaml__sticky_op ;
+                           "$fmjaml__skip: " & $fmjaml__skip ;
                            "¢dpsGTPos: " & ¢dpsGTPos ;
                            "¢dpsReplaceOp: " & ¢dpsReplaceOp ;
                            ) ;
                        EndIf=0];"")) ;
 
                        /* Ignore the value if skipping…  */
-                        If=Case ( not $fmJAML__skip ; Let([
+                        If=Case ( not $fmjaml__skip ; Let([
 
                             /* …else mark clause as not empty and process the value… */
-                            $fmJAML__clause_empty = "" ;
-                            $fmJAML__val = Case(
+                            $fmjaml__clause_empty = "" ;
+                            $fmjaml__val = Case(
 
                               /* Not op `!…`*/
-                              $fmJAML__sticky_op = "!" ; Case ( Case ( ¢isRegex ;
+                              $fmjaml__sticky_op = "!" ; Case ( Case ( ¢isRegex ;
                                   /* If regex match… */
-                                  Let([$fmJAML__eval = "MBS(\"RegEx.Match\";" & Quote ( ¢dpsValue ) & ";" & Quote ( $fmJAML__val ) & ")"
-                                      ]; Exact( Evaluate ( $fmJAML__eval ) ; 1 )
+                                  Let([$fmjaml__eval = "MBS(\"RegEx.Match\";" & Quote ( ¢dpsValue ) & ";" & Quote ( $fmjaml__val ) & ")"
+                                      ]; Exact( Evaluate ( $fmjaml__eval ) ; 1 )
                                       ) ;
                                   /* If value is equal… (FIXME exact?) */
-                                  $fmJAML__val = ¢dpsValue
+                                  $fmjaml__val = ¢dpsValue
                                 ) /* …REMOVE, otherwise keep */
-                                  ; "" ; $fmJAML__val ) ;
+                                  ; "" ; $fmjaml__val ) ;
 
                               /* EOL op `¶'…'` -> Replace EOLs */
-                              $fmJAML__sticky_op = "¶" ; Let([
-                                $fmJAML__sticky_op = "" ;
-                                vResult = Substitute ( $fmJAML__val
+                              $fmjaml__sticky_op = "¶" ; Let([
+                                $fmjaml__sticky_op = "" ;
+                                vResult = Substitute ( $fmjaml__val
                                                      ; [Char(13) & Char(10);¶]       /* CRLF -> CR */
                                                      ; [Char(10);¶]                  /* LF -> CR */
                                                      ; [¶ ; ¢dpsValue] /* CR -> replacement */
@@ -547,41 +526,41 @@ TNBAOUJDIMR
                                 ) ;
 
                               /* Divide op  (/'…') */
-                              $fmJAML__sticky_op = "/" ; Let( $fmJAML__sticky_op = "" ; $fmJAML__val / ¢dpsValue ) ;
+                              $fmjaml__sticky_op = "/" ; Let( $fmjaml__sticky_op = "" ; $fmjaml__val / ¢dpsValue ) ;
 
 
 
                               /* replace operation  ('…'>'…') -> Replace the value by the text */
-                              $fmJAML__sticky_op = ">" ; Let([
-                                $fmJAML__sticky_op = "" ;
+                              $fmjaml__sticky_op = ">" ; Let([
+                                $fmjaml__sticky_op = "" ;
                                 vResult = Case( ¢isRegex ;
                                     /* Regex replace */
-                                  Let([$fmJAML__eval = "MBS(\"RegEx.ReplaceAll\";" & Quote ( $fmJAML__val ) & ";" & Quote ( $fmJAML__replace ) & ";" & Quote ( ¢dpsValue ) & ";" & Quote ( $fmJAML__attributes ) & ")"
-                                      ]; Evaluate ( $fmJAML__eval )
+                                  Let([$fmjaml__eval = "MBS(\"RegEx.ReplaceAll\";" & Quote ( $fmjaml__val ) & ";" & Quote ( $fmjaml__replace ) & ";" & Quote ( ¢dpsValue ) & ";" & Quote ( $fmjaml__attributes ) & ")"
+                                      ]; Evaluate ( $fmjaml__eval )
                                       ) ;
                                     /* Substitute replace */
-                                    Substitute ( $fmJAML__val ; $fmJAML__replace ; ¢dpsValue )
+                                    Substitute ( $fmjaml__val ; $fmjaml__replace ; ¢dpsValue )
                                   );
-                                $fmJAML__replace = ""
+                                $fmjaml__replace = ""
                                 ];
                                 vResult
                                 ) ;
 
 
                               /* replace operation  ('…'>'…') -> Remember attributes */
-                              $fmJAML__sticky_op = "@" ; Let([
-                                $fmJAML__sticky_op = "" ;
-                                $fmJAML__attributes = ¢dpsValue
+                              $fmjaml__sticky_op = "@" ; Let([
+                                $fmjaml__sticky_op = "" ;
+                                $fmjaml__attributes = ¢dpsValue
                                 ];
-                                $fmJAML__val /* don't change */
+                                $fmjaml__val /* don't change */
                                 ) ;
 
                               /* else if followed by a `>` -> just remember value to replace ('…'>) and replaceOp */
                               ¢dpsReplaceOp ; Let([
-                                $fmJAML__replace = ¢dpsValue ;
-                                $fmJAML__replaceOp = ¢char
+                                $fmjaml__replace = ¢dpsValue ;
+                                $fmjaml__replaceOp = ¢char
                                 ];
-                                $fmJAML__val /* don't change */
+                                $fmjaml__val /* don't change */
                                 ) ;
 
                               /* else set-text operation ('…') -> Set value */
@@ -593,16 +572,16 @@ TNBAOUJDIMR
 
     /* Process skip: skip any other simple operators (and continue skipping up to any of the above operators or <EOF>) */
 
-    $fmJAML__skip ; Let([ /* DEBUG fmJAML */
+    $fmjaml__skip ; Let([ /* DEBUG fmJAML */
                         If=Case ( ¢debug ≥ 8 ; Let([
-                          $$fmJAML_log = List( $$fmJAML_log ;
+                          $$fmjaml_log = List( $$fmjaml_log ;
                                          "SKIPPED: '" & ¢char & "'" ;
                                          ) ;
                         EndIf=0];""))
                       ];"") ;
 
     /* ANY other active character indicates the clause is not empty */
-    $fmJAML__clause_empty and Let( $fmJAML__clause_empty = "" ; False ) ; "" ;
+    $fmjaml__clause_empty and Let( $fmjaml__clause_empty = "" ; False ) ; "" ;
 
 
     /* Perform the next operator (using Choose for speed)… */
@@ -612,68 +591,68 @@ TNBAOUJDIMR
 
     /* Process data type */
 
-    /* "T" ;*/ Let( $fmJAML__dtype = JSONString     ; "" ) ;
-    /* "N" ;*/ Let( $fmJAML__dtype = JSONNumber     ; "" ) ;
-    /* "O" ;*/ Let( $fmJAML__dtype = JSONObject     ; "" ) ;
-    /* "A" ;*/ Let( $fmJAML__dtype = JSONArray      ; "" ) ;
-    /* "B" ;*/ Let( $fmJAML__dtype = JSONBoolean    ; "" ) ;
-    /* "U" ;*/ Let( $fmJAML__dtype = JSONNull       ; "" ) ;
-    /* "J" ;*/ Let( $fmJAML__dtype = JSONRaw        ; "" ) ;
-    /* "D" ;*/ Let( $fmJAML__dtype = ¢JSONDate      ; "" ) ;
-    /* "I" ;*/ Let( $fmJAML__dtype = ¢JSONTime      ; "" ) ;
-    /* "M" ;*/ Let( $fmJAML__dtype = ¢JSONTimestamp ; "" ) ;
-    /* "R" ;*/ Let( $fmJAML__dtype = ¢JSONContainer ; "" ) ;
+    /* "T" ;*/ Let( $fmjaml__dtype = JSONString     ; "" ) ;
+    /* "N" ;*/ Let( $fmjaml__dtype = JSONNumber     ; "" ) ;
+    /* "O" ;*/ Let( $fmjaml__dtype = JSONObject     ; "" ) ;
+    /* "A" ;*/ Let( $fmjaml__dtype = JSONArray      ; "" ) ;
+    /* "B" ;*/ Let( $fmjaml__dtype = JSONBoolean    ; "" ) ;
+    /* "U" ;*/ Let( $fmjaml__dtype = JSONNull       ; "" ) ;
+    /* "J" ;*/ Let( $fmjaml__dtype = JSONRaw        ; "" ) ;
+    /* "D" ;*/ Let( $fmjaml__dtype = ¢JSONDate      ; "" ) ;
+    /* "I" ;*/ Let( $fmjaml__dtype = ¢JSONTime      ; "" ) ;
+    /* "M" ;*/ Let( $fmjaml__dtype = ¢JSONTimestamp ; "" ) ;
+    /* "R" ;*/ Let( $fmjaml__dtype = ¢JSONContainer ; "" ) ;
 
     /* Process white space operators */
 
-    /* "*" ;*/ Let([$fmJAML__chars_read = While( ¢counter = 1 ; Middle ( ¢dps ; ¢dpsPos + ¢counter ; 1 )="*" ; ¢counter = ¢counter + 1 ; ¢counter ) ;
-                    $fmJAML__val = Case(
+    /* "*" ;*/ Let([$fmjaml__chars_read = While( ¢counter = 1 ; Middle ( ¢dps ; ¢dpsPos + ¢counter ; 1 )="*" ; ¢counter = ¢counter + 1 ; ¢counter ) ;
+                    $fmjaml__val = Case(
 
                       /* 5*s = Format JSON */
-                      $fmJAML__chars_read ≥ 5 ;
-                        JSONFormatElements ( $fmJAML__val ) ;
+                      $fmjaml__chars_read ≥ 5 ;
+                        JSONFormatElements ( $fmjaml__val ) ;
 
                       /* 4*s = Compact JSON */
-                      $fmJAML__chars_read = 4 ;
-                        JSONGetElement ( $fmJAML__val ; "" );
+                      $fmjaml__chars_read = 4 ;
+                        JSONGetElement ( $fmjaml__val ; "" );
 
                       /* "*" = simple trim */
-                      $fmJAML__chars_read = 1 ;
-                        Trim( $fmJAML__val ) ;
+                      $fmjaml__chars_read = 1 ;
+                        Trim( $fmjaml__val ) ;
 
                       /* "*…" complex trim */
                         Let(
                         [
 
                         /* "**" = horizontal trim (space and tab) */
-                        ¢tmp  = Substitute( $fmJAML__val ; [" ";""] ; [¢TAB; ""] ) ;
+                        ¢tmp  = Substitute( $fmjaml__val ; [" ";""] ; [¢TAB; ""] ) ;
 
                         /* "***" = vertical trim (and EOL) */
-                        ¢tmp  = Case( $fmJAML__chars_read < 3 ; ¢tmp ; Substitute( ¢tmp ; [¶;""] ; [Char(10);""]) ) ;
+                        ¢tmp  = Case( $fmjaml__chars_read < 3 ; ¢tmp ; Substitute( ¢tmp ; [¶;""] ; [Char(10);""]) ) ;
 
                         /* trim everything outside the first and last characters */
-                        ¢posChar1 = Position ( $fmJAML__val ; Left( ¢tmp ; 1 ) ; 1 ; 1 ) ;
-                        ¢posCharN = Position ( $fmJAML__val ; Right( ¢tmp ; 1 ) ; Length ( $fmJAML__val ) ; -1 )
+                        ¢posChar1 = Position ( $fmjaml__val ; Left( ¢tmp ; 1 ) ; 1 ; 1 ) ;
+                        ¢posCharN = Position ( $fmjaml__val ; Right( ¢tmp ; 1 ) ; Length ( $fmjaml__val ) ; -1 )
 
                         ];
 
-                        Case( not IsEmpty ( ¢tmp ) ; Middle ( $fmJAML__val ; ¢posChar1 ; ¢posCharN+1 - ¢posChar1 ) )
+                        Case( not IsEmpty ( ¢tmp ) ; Middle ( $fmjaml__val ; ¢posChar1 ; ¢posCharN+1 - ¢posChar1 ) )
                         
                         )
                       )
                    ]; "" ) ;
-    /* "!" ;*/ Let( $fmJAML__sticky_op = "!" ; "" );
+    /* "!" ;*/ Let( $fmjaml__sticky_op = "!" ; "" );
 
     /* Process EOL operator */
 
     /* "\¶" ;*/ Let([  If=Case ( Middle ( ¢dps ; ¢dpsPos + 1 ; 1 )="1" ; Let([
-                          $fmJAML__chars_read = $fmJAML__chars_read + 1 ;
-                          $fmJAML__val = GetValue( $fmJAML__val ; 1 ) ;
+                          $fmjaml__chars_read = $fmjaml__chars_read + 1 ;
+                          $fmjaml__val = GetValue( $fmjaml__val ; 1 ) ;
                         Else=0];"") ; Let([
-                          $fmJAML__sticky_op = "¶"  ;
+                          $fmjaml__sticky_op = "¶"  ;
                         EndIf=0];"")) ;
 
-                          $fmJAML__sticky_op = Case( Middle ( ¢dps ; ¢dpsPos + 1 ; 1 )="1" ; "" ; $fmJAML__sticky_op )
+                          $fmjaml__sticky_op = Case( Middle ( ¢dps ; ¢dpsPos + 1 ; 1 )="1" ; "" ; $fmjaml__sticky_op )
                       ]; "" ) ;
 
     /* 
@@ -685,12 +664,12 @@ TNBAOUJDIMR
      */
     /* "?" or 
        "-" */
-    Let ([$fmJAML__context       = ¢char ;
-          $fmJAML__present       = not IsEmpty ( $fmJAML__val );  
-          $fmJAML__test          = $fmJAML__present xor (¢char = "-");  
-          $fmJAML__skip          = not $fmJAML__test ;
-          $fmJAML__clause_empty  = 1 ;
-          $fmJAML__sticky_op     = ""
+    Let ([$fmjaml__context       = ¢char ;
+          $fmjaml__present       = not IsEmpty ( $fmjaml__val );  
+          $fmjaml__test          = $fmjaml__present xor (¢char = "-");  
+          $fmjaml__skip          = not $fmjaml__test ;
+          $fmjaml__clause_empty  = 1 ;
+          $fmjaml__sticky_op     = ""
          ]; "" ) ;
 
     /*
@@ -700,7 +679,7 @@ TNBAOUJDIMR
      *  `@` Attributes
      *  `#` Comment
      */
-     Let( $fmJAML__sticky_op = ¢char ; "" )
+     Let( $fmjaml__sticky_op = ¢char ; "" )
 
     ) /* End Choose ( parseNextOp ) */
 
@@ -712,7 +691,7 @@ TNBAOUJDIMR
 
   …skipping multiple characters read, if necessary
   */
-  ¢dpsPos = ¢dpsPos + $fmJAML__chars_read
+  ¢dpsPos = ¢dpsPos + $fmjaml__chars_read
 
   ];"")
   ); /* End parseDTS */
@@ -722,8 +701,8 @@ TNBAOUJDIMR
 Default data types
 *****************/
 
-$fmJAML__dtype = Case(
-    not IsEmpty ( $fmJAML__dtype ) ; $fmJAML__dtype ;
+$fmjaml__dtype = Case(
+    not IsEmpty ( $fmjaml__dtype ) ; $fmjaml__dtype ;
     ¢posEquals = 0    ; JSONObject ;
     IsEmpty ( ¢expr ) ; JSONNull ;
     GetAsNumber ( ¢expr ) = ¢expr ; JSONNumber ;
@@ -742,47 +721,47 @@ Output line to JSON
 ¢result = Case (
 
     /* DROP line, if no path */
-    IsEmpty( $fmJAML__path ) ;
+    IsEmpty( $fmjaml__path ) ;
       ¢result ;
 
     /* Set element based on the calculated path value and data type */
-      JSONSetElement ( ¢result ; $fmJAML__path ; 
+      JSONSetElement ( ¢result ; $fmjaml__path ; 
         Case(
           /* Encode Date/Time/Timestamp using ISO 8601 (RFC 3339) without timezone (YYYY-MM-DD / HH:MM:SS / YYYY-MM-DDTHH:MM:SS) */
-          $fmJAML__dtype = ¢JSONDate ;      Year  ( $fmJAML__val )
-               & SerialIncrement ( "-00" ; Month ( $fmJAML__val ) )
-               & SerialIncrement ( "-00" ; Day   ( $fmJAML__val ) ) ;
-          $fmJAML__dtype = ¢JSONTime ;
-                 SerialIncrement ( "00"  ; Hour    ( $fmJAML__val ) )
-               & SerialIncrement ( ":00" ; Minute  ( $fmJAML__val ) )
-               & SerialIncrement ( ":00" ; Seconds ( $fmJAML__val ) ) ;
-          $fmJAML__dtype = ¢JSONTimestamp ; Year    ( $fmJAML__val )
-               & SerialIncrement ( "-00" ; Month   ( $fmJAML__val ) )
-               & SerialIncrement ( "-00" ; Day     ( $fmJAML__val ) )
-               & SerialIncrement ( "T00" ; Hour    ( $fmJAML__val ) )
-               & SerialIncrement ( ":00" ; Minute  ( $fmJAML__val ) )
-               & SerialIncrement ( ":00" ; Seconds ( $fmJAML__val ) ) ;
+          $fmjaml__dtype = ¢JSONDate ;      Year  ( $fmjaml__val )
+               & SerialIncrement ( "-00" ; Month ( $fmjaml__val ) )
+               & SerialIncrement ( "-00" ; Day   ( $fmjaml__val ) ) ;
+          $fmjaml__dtype = ¢JSONTime ;
+                 SerialIncrement ( "00"  ; Hour    ( $fmjaml__val ) )
+               & SerialIncrement ( ":00" ; Minute  ( $fmjaml__val ) )
+               & SerialIncrement ( ":00" ; Seconds ( $fmjaml__val ) ) ;
+          $fmjaml__dtype = ¢JSONTimestamp ; Year    ( $fmjaml__val )
+               & SerialIncrement ( "-00" ; Month   ( $fmjaml__val ) )
+               & SerialIncrement ( "-00" ; Day     ( $fmjaml__val ) )
+               & SerialIncrement ( "T00" ; Hour    ( $fmjaml__val ) )
+               & SerialIncrement ( ":00" ; Minute  ( $fmjaml__val ) )
+               & SerialIncrement ( ":00" ; Seconds ( $fmjaml__val ) ) ;
           /* Encode container using RFC 4648, above all, no problematic line breaks! */
-          $fmJAML__dtype = ¢JSONContainer ; JSONSetElement ( "{}"
-                           ;["file.name" ; GetContainerAttribute ( $fmJAML__val ; "filename" ) ; JSONString]
-                           ;["file.data" ; Base64EncodeRFC ( 4648 ; $fmJAML__val ) ; JSONString]
+          $fmjaml__dtype = ¢JSONContainer ; JSONSetElement ( "{}"
+                           ;["file.name" ; GetContainerAttribute ( $fmjaml__val ; "filename" ) ; JSONString]
+                           ;["file.data" ; Base64EncodeRFC ( 4648 ; $fmjaml__val ) ; JSONString]
                            ) ;
-            $fmJAML__val
+            $fmjaml__val
         ) ;
         Case(
-          $fmJAML__dtype = ¢JSONDate      ; JSONString ;
-          $fmJAML__dtype = ¢JSONTime      ; JSONString ;
-          $fmJAML__dtype = ¢JSONTimestamp ; JSONString ;
-          $fmJAML__dtype = ¢JSONContainer ; JSONObject ;
-            $fmJAML__dtype
+          $fmjaml__dtype = ¢JSONDate      ; JSONString ;
+          $fmjaml__dtype = ¢JSONTime      ; JSONString ;
+          $fmjaml__dtype = ¢JSONTimestamp ; JSONString ;
+          $fmjaml__dtype = ¢JSONContainer ; JSONObject ;
+            $fmjaml__dtype
         ) 
      )
   );
 
 If=Case( ¢debug ≥ 5 ; Let([
-    $$fmJAML_debug_dtype = List( $$fmJAML_debug_dtype ; "line " & ¢line & ": " & $fmJAML__dtype ) ;
-    $$fmJAML_log = List( $$fmJAML_log ; "line["&¢line_i&"] -> " & 
-      Case( IsEmpty($fmJAML__path ) ; "PATH DROPPED" ; Quote( ¢result ) ) ;
+    $$fmjaml_debug_dtype = List( $$fmjaml_debug_dtype ; "line " & ¢line & ": " & $fmjaml__dtype ) ;
+    $$fmjaml_log = List( $$fmjaml_log ; "line["&¢line_i&"] -> " & 
+      Case( IsEmpty($fmjaml__path ) ; "PATH DROPPED" ; Quote( ¢result ) ) ;
       "--------"
     ) ;
 EndIf=0];""));
@@ -794,7 +773,7 @@ NEXT ¢line
 skipping multi-line heredocs, as necessary
 */
 
-¢line_i = ¢line_i + 1 + $fmJAML__inc
+¢line_i = ¢line_i + 1 + $fmjaml__inc
 
 ];  
 
@@ -807,17 +786,17 @@ RETURN result
 
 Let(
 [
-$fmJAML__chars_read = "" ;
-$fmJAML__context = "" ;
-$fmJAML__dtype = "" ;
-$fmJAML__inc = "" ;
-$fmJAML__present = "" ;
-$fmJAML__skip = "" ;
-$fmJAML__sticky_op = "" ;
-$fmJAML__test = "" ;
-$fmJAML__path = "" ;
-$fmJAML__path_prev  = "" ;
-$fmJAML__val = ""
+$fmjaml__chars_read = "" ;
+$fmjaml__context = "" ;
+$fmjaml__dtype = "" ;
+$fmjaml__inc = "" ;
+$fmjaml__present = "" ;
+$fmjaml__skip = "" ;
+$fmjaml__sticky_op = "" ;
+$fmjaml__test = "" ;
+$fmjaml__path = "" ;
+$fmjaml__path_prev  = "" ;
+$fmjaml__val = ""
 ];
 
 ¢result

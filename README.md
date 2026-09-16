@@ -10,7 +10,7 @@
   code from your keyboard
 ```
 
-fmJAML - **F**ile**M**aker **Ja**SON **M**arkdown **L**anguage -  is a simple but powerful `path=value` templating language for writing JSON structures in a shorthand format suitable for both 'Machine and Mensch' - for AI+ME+U!
+fmJAML - **F**ile**M**aker **J**SON as **a** **M**arkdown **L**anguage -  is a simple but powerful `path=value` templating language for writing JSON structures in a shorthand format suitable for both 'Machine and Mensch' - for AI+ME+U!
 
 **🚧 fmJAML, and particularly this documentation, is still under construction! 🚧**
 
@@ -158,7 +158,7 @@ fmJAML supports
       - `***?*****` (optional pretty printed JSON)
       - `!'0''1'-:'illegal value' (error handling) 
 
-# Further Example
+## Further Example
 
 Here is an fmJAML template to construct a feedback object
 
@@ -178,7 +178,7 @@ fmJAML is 'FileMaker' JAML in so far that it is inspired by a cut down version t
 
 See the [fmJAML documentation](https://github.com/fmIDE/fmJAML/wiki) for more information.
 
-# User Quotes
+## User Quotes
 
 2026-05-13 ChatGPT:
 
