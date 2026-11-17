@@ -101,7 +101,7 @@ fmJAML supports
       { "scene_1" : "Foo: \"Whats a DSL Baz?\"\rBaz: \"A DSL is a Domain Specific Language, Foo.\"\rFoo: 🤯" }
       ```
 
-    - (You can even embed calculations (for fmIDE) - juist add two more `=`s
+    - To turn text into a quoted FileMaker calculation, add two more `=`s (`====` or `=====`). See [Value operators](docs/value-operators.md).
 - **simple data type specification**
   - numbers and booleans are recognized automatically
 
