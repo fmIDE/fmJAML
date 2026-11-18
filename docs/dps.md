@@ -3,8 +3,6 @@ layout: page
 title: Data Processing String (DPS)
 ---
 
-# Data Processing String (DPS)
-
 The **Data Processing String**, or **DPS**, is an optional operator sequence placed between the assignment and the value.
 
 General form:
