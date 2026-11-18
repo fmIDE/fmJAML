@@ -3,8 +3,6 @@ layout: page
 title: Building JSON structures
 ---
 
-# Building JSON structures
-
 fmJAML builds JSON by assigning values to paths.
 
 ## Simple object properties
