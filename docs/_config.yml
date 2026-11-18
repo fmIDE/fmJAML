@@ -1,0 +1,10 @@
+title: fmJAML
+description: FileMaker JSON as a Markdown Language
+url: https://fmide.github.io
+baseurl: /fmJAML
+theme: minima
+header_pages:
+  - introduction.md
+  - json-structures.md
+  - value-operators.md
+  - dps.md
