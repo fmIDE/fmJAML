@@ -3,8 +3,6 @@ layout: page
 title: Introduction
 ---
 
-# Introduction
-
 ## What is fmJAML?
 
 **fmJAML — FileMaker JSON as a Markdown Language — is a compact, line-oriented domain-specific language for constructing JSON.**
