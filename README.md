@@ -12,7 +12,8 @@
 
 **fmJAML — FileMaker JSON as a Markdown Language — is a compact, line-oriented language for constructing JSON in a form that is easy for both people and AI to read and write.**
 
-👉 **[Read the fmJAML documentation](docs/index.md)**
+👉 **[Read the fmJAML documentation](https://fmide.github.io/fmJAML/)**  
+[Documentation source](docs/index.md)
 
 > **Status:** fmJAML and its documentation are still evolving. The syntax is usable, but some areas remain under active development.
 
