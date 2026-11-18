@@ -1,9 +1,7 @@
 ---
-layout: home
-title: fmJAML
+layout: page
+title: fmJAML documentation
 ---
-
-# fmJAML documentation
 
 **fmJAML — FileMaker JSON as a Markdown Language — is a compact, line-oriented language for constructing JSON in a form that is easy for both people and AI to read and write.**
 
@@ -28,6 +26,27 @@ The example that inspired this documentation shows several fmJAML ideas at once:
   | | | | | | | | |__| / ____ \| |  | | |____
   |_| |_| |_| |_|\____/_/    \_\_|  |_|______|
 ===
+```
+
+produces:
+
+```json
+[
+  {
+    "fmJAML": {
+      "date_of_inspiration": "2026-03-10",
+      "implementation_count": 1,
+      "implementations": [ "fmJAML Custom Function" ],
+      "is_cool": true,
+      "name": [
+        "FileMaker JaSON Markdown Language",
+        "FileMaker JSON A Markdown Language",
+        "FileMaker JSON As a Markdown Language"
+      ],
+      "text_logo": "    __                _         __  __ _\r   / _|              | |  /\\   |  \\/  | |\r  | |_ _ __ ___      | | /  \\  | \\  / | |\r  |  _| '_ \` _ \\ _   | |/ /\\ \\ | |\\/| | |\r  | | | | | | | | |__| / ____ \\| |  | | |____\r  |_| |_| |_| |_|\\____/_/    \\_\\_|  |_|______|"
+    }
+  }
+]
 ```
 
 It combines arrays, path inheritance, automatic simple types, an explicit date type, and a multiline text value — while the JSON structure remains visually apparent in the source.
