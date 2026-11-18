@@ -1,3 +1,8 @@
+---
+layout: page
+title: Introduction
+---
+
 # Introduction
 
 ## What is fmJAML?
