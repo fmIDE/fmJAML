@@ -1,4 +1,7 @@
-# Value operators
+---
+layout: page
+title: Value operators
+---
 
 fmJAML has three pairs of value forms. Each pair has a single-line and a multiline form.
 
